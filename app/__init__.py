@@ -11,6 +11,23 @@ login_manager = LoginManager()
 migrate = Migrate()
 
 
+def _normalize_db_url(env_url: str | None, default_sqlite: str) -> str:
+    """
+    Toma DATABASE_URL si existe; si no, usa SQLite.
+    Arregla el esquema postgres:// -> postgresql+psycopg2:// para SQLAlchemy.
+    """
+    url = (env_url or "").strip() or default_sqlite
+
+    # Railway a veces da 'postgres://...'; SQLAlchemy moderno lo acepta como 'postgresql+psycopg2://'
+    if url.startswith("postgres://"):
+        url = url.replace("postgres://", "postgresql+psycopg2://", 1)
+    # Si ya viene como 'postgresql://', lo dejamos; opcionalmente puedes forzar +psycopg2:
+    # elif url.startswith("postgresql://"):
+    #     url = url.replace("postgresql://", "postgresql+psycopg2://", 1)
+
+    return url
+
+
 def create_app() -> Flask:
     # Localiza carpetas raíz del proyecto para que encuentre /templates y /static
     BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -22,12 +39,21 @@ def create_app() -> Flask:
 
     # --- Config base
     app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret")
-
-    # Base de datos en la carpeta instance/
-    os.makedirs(app.instance_path, exist_ok=True)
-    default_db = "sqlite:///" + os.path.join(app.instance_path, "servicio.db")
-    app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", default_db)
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    app.config.setdefault("JSON_SORT_KEYS", False)
+
+    # Base de datos (SQLite local en instance/ o Postgres en Railway)
+    os.makedirs(app.instance_path, exist_ok=True)
+    default_sqlite = "sqlite:///" + os.path.join(app.instance_path, "servicio.db")
+    app.config["SQLALCHEMY_DATABASE_URI"] = _normalize_db_url(
+        os.environ.get("DATABASE_URL"),
+        default_sqlite,
+    )
+    # Sanea conexiones colgadas (útil en ambientes con NAT/Proxies)
+    app.config.setdefault(
+        "SQLALCHEMY_ENGINE_OPTIONS",
+        {"pool_pre_ping": True}
+    )
 
     # Rutas absolutas a las plantillas DOCX (carpeta dentro del paquete app/)
     app.config["TEMPLATE_INTERNO"] = os.environ.get(
@@ -45,10 +71,14 @@ def create_app() -> Flask:
 
     # --- DB & Migrations
     db.init_app(app)
-    with app.app_context():
-        from . import models  # asegura que Alembic vea los modelos
-        db.create_all()
     migrate.init_app(app, db)
+
+    # Solo crea tablas automáticamente en SQLite local (para desarrollo).
+    # En Postgres/producción usa migraciones (flask db upgrade).
+    if app.config["SQLALCHEMY_DATABASE_URI"].startswith("sqlite:"):
+        with app.app_context():
+            from . import models  # asegura que Alembic vea los modelos
+            db.create_all()
 
     # --- Login
     login_manager.init_app(app)
