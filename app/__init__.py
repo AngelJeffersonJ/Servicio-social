@@ -1,5 +1,7 @@
 from __future__ import annotations
 import os
+from urllib.parse import urlparse, urlunparse, parse_qsl, urlencode
+
 from flask import Flask, redirect, url_for, Response, request, current_app
 from flask_login import LoginManager, current_user
 from flask_migrate import Migrate
@@ -11,21 +13,35 @@ login_manager = LoginManager()
 migrate = Migrate()
 
 
-def _normalize_db_url(env_url: str | None, default_sqlite: str) -> str:
+def _normalize_database_url(raw: str) -> str:
     """
-    Toma DATABASE_URL si existe; si no, usa SQLite.
-    Arregla el esquema postgres:// -> postgresql+psycopg2:// para SQLAlchemy.
+    Normaliza DSN para SQLAlchemy:
+    - Reescribe 'postgres://' -> 'postgresql+psycopg2://'
+    - Añade sslmode=require cuando se usa el host público de Railway (proxy.rlwy.net)
+      o cuando se define FORCE_DB_SSL=true.
     """
-    url = (env_url or "").strip() or default_sqlite
+    if not raw:
+        return raw
 
-    # Railway a veces da 'postgres://...'; SQLAlchemy moderno lo acepta como 'postgresql+psycopg2://'
-    if url.startswith("postgres://"):
-        url = url.replace("postgres://", "postgresql+psycopg2://", 1)
-    # Si ya viene como 'postgresql://', lo dejamos; opcionalmente puedes forzar +psycopg2:
-    # elif url.startswith("postgresql://"):
-    #     url = url.replace("postgresql://", "postgresql+psycopg2://", 1)
+    # 1) postgres -> postgresql+psycopg2
+    if raw.startswith("postgres://"):
+        raw = "postgresql+psycopg2://" + raw[len("postgres://"):]
+    elif raw.startswith("postgresql://"):
+        raw = "postgresql+psycopg2://" + raw[len("postgresql://"):]
 
-    return url
+    # 2) sslmode=require si corresponde
+    u = urlparse(raw)
+    q = dict(parse_qsl(u.query, keep_blank_values=True))
+    need_ssl = (
+        os.environ.get("FORCE_DB_SSL", "").lower() in {"1", "true", "yes"}
+        or (u.hostname or "").endswith("proxy.rlwy.net")
+        or (u.hostname or "").endswith("railway.app")
+    )
+    if need_ssl and "sslmode" not in q:
+        q["sslmode"] = "require"
+
+    raw = urlunparse((u.scheme, u.netloc, u.path, u.params, urlencode(q), u.fragment))
+    return raw
 
 
 def create_app() -> Flask:
@@ -39,21 +55,19 @@ def create_app() -> Flask:
 
     # --- Config base
     app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret")
-    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-    app.config.setdefault("JSON_SORT_KEYS", False)
 
-    # Base de datos (SQLite local en instance/ o Postgres en Railway)
+    # Base de datos: por defecto SQLite en instance/, o bien DATABASE_URL (Railway)
     os.makedirs(app.instance_path, exist_ok=True)
-    default_sqlite = "sqlite:///" + os.path.join(app.instance_path, "servicio.db")
-    app.config["SQLALCHEMY_DATABASE_URI"] = _normalize_db_url(
-        os.environ.get("DATABASE_URL"),
-        default_sqlite,
-    )
-    # Sanea conexiones colgadas (útil en ambientes con NAT/Proxies)
-    app.config.setdefault(
-        "SQLALCHEMY_ENGINE_OPTIONS",
-        {"pool_pre_ping": True}
-    )
+    default_db = "sqlite:///" + os.path.join(app.instance_path, "servicio.db")
+    raw_dsn = os.environ.get("DATABASE_URL", default_db)
+    app.config["SQLALCHEMY_DATABASE_URI"] = _normalize_database_url(raw_dsn)
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+    # Conexión más robusta para Postgres gestionado
+    app.config.setdefault("SQLALCHEMY_ENGINE_OPTIONS", {
+        "pool_pre_ping": True,
+        "pool_recycle": 300,   # recicla conexiones cada 5 min
+    })
 
     # Rutas absolutas a las plantillas DOCX (carpeta dentro del paquete app/)
     app.config["TEMPLATE_INTERNO"] = os.environ.get(
@@ -71,14 +85,11 @@ def create_app() -> Flask:
 
     # --- DB & Migrations
     db.init_app(app)
-    migrate.init_app(app, db)
+    migrate.init_app(app, db)  # usa Flask-Migrate si está instalado
 
-    # Solo crea tablas automáticamente en SQLite local (para desarrollo).
-    # En Postgres/producción usa migraciones (flask db upgrade).
-    if app.config["SQLALCHEMY_DATABASE_URI"].startswith("sqlite:"):
-        with app.app_context():
-            from . import models  # asegura que Alembic vea los modelos
-            db.create_all()
+    # Si estás en local sin migraciones aplicadas, descomenta una vez:
+    # with app.app_context():
+    #     db.create_all()
 
     # --- Login
     login_manager.init_app(app)
@@ -101,10 +112,10 @@ def create_app() -> Flask:
             return name in current_app.view_functions
         return dict(has_endpoint=has_endpoint)
 
-    # CSRF opcional “vacío” si no usas Flask-WTF (evita errores en forms con {{ csrf_token() }})
+    # CSRF opcional si no usas Flask-WTF
     app.jinja_env.globals.setdefault("csrf_token", lambda: "")
 
-    # --- Blueprints (registro explícito con url_prefix)
+    # --- Blueprints
     from .views.auth import auth_bp
     from .views.proyectos import proy_bp
     from .views.admin import admin_bp
@@ -115,7 +126,6 @@ def create_app() -> Flask:
     app.register_blueprint(admin_bp, url_prefix="/admin")
     app.register_blueprint(alum_bp, url_prefix="/alumnos")
 
-    # (Opcional) otros blueprints si existen
     try:
         from .views.main import main_bp
         app.register_blueprint(main_bp)
@@ -132,7 +142,6 @@ def create_app() -> Flask:
     def forbidden(e):
         try:
             if getattr(current_user, "is_authenticated", False) and getattr(current_user, "rol", None) == "alumno":
-                # Si el 403 viene de vistas de alumnos, no hagas redirect para no ciclar
                 if request.endpoint and request.endpoint.startswith("alumnos."):
                     return Response("Forbidden", status=403)
                 return redirect(url_for("alumnos.mis_documentos"))
