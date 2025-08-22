@@ -291,6 +291,7 @@ def usuarios_edit(uid: int):
     _solo_admin()
     u = User.query.get_or_404(uid)
 
+    # catálogo de departamentos para el form
     if Departamento is not None:
         try:
             deps = Departamento.query.order_by(Departamento.nombre).all()
@@ -299,6 +300,7 @@ def usuarios_edit(uid: int):
     else:
         deps = []
 
+    # modelos extendidos (si existen)
     ai = None
     si = None
     try:
@@ -310,11 +312,20 @@ def usuarios_edit(uid: int):
         pass
 
     if request.method == "POST":
+        # por si la sesión venía “aborted” de una petición anterior en el mismo worker
+        try:
+            db.session.rollback()
+        except Exception:
+            pass
+
         nombre   = (request.form.get("nombre") or "").strip()
         email    = (request.form.get("email") or "").strip().lower()
         role     = (request.form.get("role") or request.form.get("rol") or u.rol).strip()
         password = (request.form.get("password") or "").strip()
-        dept_id  = request.form.get("departamento_id") or None
+
+        # limpiar dept_id: tratar "-", "—", "" como None
+        dept_raw = (request.form.get("departamento_id") or "").strip()
+        dept_id  = None if dept_raw in {"", "-", "—"} else dept_raw
 
         ap_pat  = (request.form.get("apellido_paterno") or "").strip() or None
         ap_mat  = (request.form.get("apellido_materno") or "").strip() or None
@@ -340,6 +351,7 @@ def usuarios_edit(uid: int):
                 if User.query.filter_by(email=email).first():
                     errors.append("El email ya está registrado.")
             except Exception:
+                # si falla la consulta, no bloquees al usuario por esto
                 pass
 
         if errors:
@@ -347,14 +359,15 @@ def usuarios_edit(uid: int):
                 flash(e, "warning")
             return render_template("admin/usuarios_edit.html", u=u, deps=deps)
 
-        # base
+        # actualizar user base
         u.nombre = nombre
         u.email  = email
         u.rol    = role
-        if dept_id and hasattr(u, "departamento_id"):
+        if hasattr(u, "departamento_id"):
             try:
-                u.departamento_id = int(dept_id)
+                u.departamento_id = int(dept_id) if dept_id is not None else None
             except Exception:
+                # si viene basura, déjalo como estaba
                 pass
         if password:
             u.set_password(password)
@@ -383,8 +396,7 @@ def usuarios_edit(uid: int):
             else:
                 if StaffInfo:
                     if si is None:
-                        si = StaffInfo(user_id=u.id)
-                        db.session.add(si)
+                        si = StaffInfo(user_id=u.id); db.session.add(si)
                     si.nombre = nombre
                     si.apellido_paterno = ap_pat
                     si.apellido_materno = ap_mat
@@ -392,9 +404,40 @@ def usuarios_edit(uid: int):
                 if AlumnoInfo and ai is not None:
                     db.session.delete(ai); ai = None
         except Exception:
-            pass
+            # errores de mapeo no deben abortar la sesión silenciosamente
+            import traceback; print("Error preparando modelos extendidos:\n", traceback.format_exc())
 
-        # bloque robusto de commit con manejo de errores
+        # ---------- FLUSH EXPLÍCITO para capturar la causa real ----------
+        try:
+            db.session.flush()  # aquí aparecerá el error real (FK/UNIQUE/NOT NULL), si lo hay
+        except IntegrityError as ie:
+            db.session.rollback()
+            # Detalle útil de Postgres si está disponible
+            detail = ""
+            try:
+                detail = getattr(getattr(ie, "orig", None), "diag", None).message_detail or ""
+            except Exception:
+                pass
+            import traceback
+            print("IntegrityError en usuarios_edit (flush):\n", traceback.format_exc(), "\nDetalle:", detail)
+            # Mensajes amigables
+            msg = "Conflicto de integridad."
+            if "unique" in str(ie).lower() and "users" in str(ie).lower():
+                msg = "El email ya existe."
+            elif "foreign key" in str(ie).lower():
+                msg = "Departamento inválido (FK)."
+            elif "not-null" in str(ie).lower() or "null value" in str(ie).lower():
+                msg = "Faltan campos obligatorios."
+            flash(f"No se pudo actualizar: {msg}", "danger")
+            return render_template("admin/usuarios_edit.html", u=u, deps=deps)
+        except SQLAlchemyError:
+            db.session.rollback()
+            import traceback
+            print("SQLAlchemyError en usuarios_edit (flush):\n", traceback.format_exc())
+            flash("Error de base de datos al preparar los cambios.", "danger")
+            return render_template("admin/usuarios_edit.html", u=u, deps=deps)
+
+        # ---------- Si el flush fue bien, ahora sí commit ----------
         try:
             db.session.commit()
             flash("Usuario actualizado correctamente.", "success")
@@ -402,12 +445,12 @@ def usuarios_edit(uid: int):
         except IntegrityError:
             db.session.rollback()
             import traceback
-            print("IntegrityError en usuarios_edit:\n", traceback.format_exc())
-            flash("No se pudo actualizar: conflicto de unicidad (email).", "danger")
+            print("IntegrityError en usuarios_edit (commit):\n", traceback.format_exc())
+            flash("No se pudo actualizar: conflicto de unicidad.", "danger")
         except SQLAlchemyError:
             db.session.rollback()
             import traceback
-            print("SQLAlchemyError en usuarios_edit:\n", traceback.format_exc())
+            print("SQLAlchemyError en usuarios_edit (commit):\n", traceback.format_exc())
             flash("Error al actualizar el usuario en la base de datos.", "danger")
 
     return render_template("admin/usuarios_edit.html", u=u, deps=deps)
