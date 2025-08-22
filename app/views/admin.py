@@ -343,7 +343,8 @@ def usuarios_edit(uid: int):
                 pass
 
         if errors:
-            for e in errors: flash(e, "warning")
+            for e in errors:
+                flash(e, "warning")
             return render_template("admin/usuarios_edit.html", u=u, deps=deps)
 
         # base
@@ -382,7 +383,8 @@ def usuarios_edit(uid: int):
             else:
                 if StaffInfo:
                     if si is None:
-                        si = StaffInfo(user_id=u.id); db.session.add(si)
+                        si = StaffInfo(user_id=u.id)
+                        db.session.add(si)
                     si.nombre = nombre
                     si.apellido_paterno = ap_pat
                     si.apellido_materno = ap_mat
@@ -392,18 +394,24 @@ def usuarios_edit(uid: int):
         except Exception:
             pass
 
+        # bloque robusto de commit con manejo de errores
         try:
             db.session.commit()
             flash("Usuario actualizado correctamente.", "success")
             return redirect(url_for("admin.usuarios_list"))
         except IntegrityError:
             db.session.rollback()
+            import traceback
+            print("IntegrityError en usuarios_edit:\n", traceback.format_exc())
             flash("No se pudo actualizar: conflicto de unicidad (email).", "danger")
         except SQLAlchemyError:
             db.session.rollback()
+            import traceback
+            print("SQLAlchemyError en usuarios_edit:\n", traceback.format_exc())
             flash("Error al actualizar el usuario en la base de datos.", "danger")
 
     return render_template("admin/usuarios_edit.html", u=u, deps=deps)
+
 
 
 @admin_bp.route("/usuarios/<int:uid>/eliminar", methods=["POST"], endpoint="usuarios_delete")
