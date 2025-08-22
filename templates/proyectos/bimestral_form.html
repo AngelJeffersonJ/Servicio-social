@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block title %}Reporte bimestral {{ numero }}{% endblock %}
+{% block content %}
+
+<h4 class="mb-3">Reporte bimestral {{ numero }}</h4>
+
+<div class="card bg-dark border-secondary mb-3">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div><small class="text-secondary">Alumno</small>
+                    <div>{{ alumno.nombre }}</div>
+                </div>
+                <div class="mt-2"><small class="text-secondary">Proyecto</small>
+                    <div>{{ proyecto.nombre }}</div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div><small class="text-secondary">Dependencia</small>
+                    <div>{{ proyecto.nombre_dependencia or (proyecto.departamento.nombre if proyecto.departamento else
+                        '-') }}</div>
+                </div>
+                <div class="mt-2"><small class="text-secondary">Responsable</small>
+                    <div>{{ proyecto.nombre_responsable or (proyecto.responsable_user.nombre if
+                        proyecto.responsable_user else '-') }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# ---------- helpers de plantilla ---------- #}
+{% macro v(name, fallback) -%}
+{%- if form_data is defined and form_data and name in form_data -%}
+{{ form_data[name] }}
+{%- else -%}
+{{ fallback }}
+{%- endif -%}
+{%- endmacro %}
+
+{% macro is_checked(name, v) -%}
+{%- if form_data is defined and form_data and name in form_data -%}
+{%- if form_data[name]|string == v|string -%}checked{%- endif -%}
+{%- else -%}
+{%- if rb_vals and rb_vals.get(name) is not none and rb_vals.get(name) == v -%}checked{%- endif -%}
+{%- endif -%}
+{%- endmacro %}
+
+<form method="post">
+    {{ csrf_token() }}
+
+    <div class="row g-3">
+        <div class="col-md-2">
+            <label class="form-label">Día inicio</label>
+            <input name="dia1" class="form-control" value="{{ v('dia1', rb.dia1 if rb else '') }}">
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Mes inicio</label>
+            <input name="mes1" class="form-control" value="{{ v('mes1', rb.mes1 if rb else '') }}">
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Año inicio</label>
+            <input name="ano1" class="form-control" value="{{ v('ano1', rb.ano1 if rb else '') }}">
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label">Día fin</label>
+            <input name="dia2" class="form-control" value="{{ v('dia2', rb.dia2 if rb else '') }}">
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Mes fin</label>
+            <input name="mes2" class="form-control" value="{{ v('mes2', rb.mes2 if rb else '') }}">
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Año fin</label>
+            <input name="ano2" class="form-control" value="{{ v('ano2', rb.ano2 if rb else '') }}">
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label">Nombre del supervisor</label>
+            <input name="nombre_supervisor" class="form-control"
+                value="{{ v('nombre_supervisor', rb.nombre_supervisor if rb else '') }}">
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Puesto del supervisor</label>
+            <input name="puesto_supervisor" class="form-control"
+                value="{{ v('puesto_supervisor', rb.puesto_supervisor if rb else '') }}">
+        </div>
+    </div>
+
+    <hr class="my-4">
+
+    {% macro radios(name, label) -%}
+    <div class="mb-3">
+        <label class="form-label">{{ label }}</label>
+        <div class="d-flex gap-3 flex-wrap">
+            {% for vopt in [0,1,2,3,4] %}
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="{{ name }}" id="{{ name }}_{{ vopt }}"
+                    value="{{ vopt }}" {{ is_checked(name, vopt) }}>
+                <label class="form-check-label" for="{{ name }}_{{ vopt }}">{{ vopt }}</label>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {%- endmacro %}
+
+    {# 7 criterios → TP_resp3,5,7,9,11,14,15 en el DOCX #}
+    {{ radios("resp_1", "1. Cumple en tiempo y forma con las actividades encomendadas alcanzando los objetivos") }}
+    {{ radios("resp_2", "2. Trabaja en equipo y se adapta a nuevas situaciones") }}
+    {{ radios("resp_3", "3. Muestra liderazgo en las actividades encomendadas") }}
+    {{ radios("resp_4", "4. Organiza su tiempo y trabaja de manera proactiva") }}
+    {{ radios("resp_5", "5. Interpreta la realidad y aporta soluciones a la problemática") }}
+    {{ radios("resp_6", "6. Realiza sugerencias innovadoras para beneficio/mejora del programa") }}
+    {{ radios("resp_7", "7. Tiene iniciativa para ayudar y muestra espíritu de servicio") }}
+
+    <div class="mb-3">
+        <label class="form-label">Observaciones del responsable</label>
+        <textarea name="observaciones_responsable" class="form-control"
+            rows="4">{{ v('observaciones_responsable', rb.observaciones_responsable if rb else '') }}</textarea>
+    </div>
+
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('proyectos.bimestres_list', alumno_id=alumno.id, proyecto_id=proyecto.id) }}"
+            class="btn btn-outline-light">Volver</a>
+        <button class="btn btn-primary">{{ 'Guardar cambios' if rb else 'Crear reporte' }}</button>
+    </div>
+</form>
+
+{% endblock %}

@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Editar departamento · Admin{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="m-0">Editar departamento</h3>
+    <a class="btn btn-outline-light" href="{{ url_for('admin.departamentos_list') }}">Volver</a>
+</div>
+
+<form method="post" action="{{ url_for('admin.departamentos_edit', did=d.id) }}" class="row gy-3">
+    {{ csrf_token() }}
+
+    <div class="col-md-8">
+        <label class="form-label">Nombre *</label>
+        <input class="form-control" name="nombre" value="{{ d.nombre }}" required>
+    </div>
+
+    {# Selector de Jefe (opcional) #}
+    {% set _jefes = jefes if jefes is defined else [] %}
+    <div class="col-md-8">
+        <label class="form-label">Jefe</label>
+        <select class="form-select" name="jefe_id">
+            <option value="">— Sin jefe asignado —</option>
+            {% for u in _jefes %}
+            <option value="{{ u.id }}" {% if (d.jefe_id is defined and d.jefe_id==u.id) or (d.jefe is defined and d.jefe
+                and d.jefe.id==u.id) %}selected{% endif %}>
+                {{ u.nombre }}{% if u.email %} — {{ u.email }}{% endif %}
+            </option>
+            {% endfor %}
+        </select>
+        <div class="form-text">Opcional. Se mostrará en la tabla de departamentos.</div>
+    </div>
+
+    <div class="col-12">
+        <button class="btn btn-primary">Guardar</button>
+    </div>
+</form>
+{% endblock %}

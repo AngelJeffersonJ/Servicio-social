@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+{% block title %}Reportes del alumno{% endblock %}
+
+{% block content %}
+<h4 class="mb-3">Reportes de {{ alumno.nombre }}</h4>
+
+<div class="card bg-dark border-secondary mb-3">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div><small class="text-secondary">Alumno</small>
+                    <div>{{ alumno.nombre }}</div>
+                </div>
+                <div class="mt-2"><small class="text-secondary">Proyecto</small>
+                    <div>{{ proyecto.nombre }}</div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div><small class="text-secondary">Dependencia</small>
+                    <div>
+                        {{ proyecto.nombre_dependencia or (proyecto.departamento.nombre if proyecto.departamento else
+                        '-') }}
+                    </div>
+                </div>
+                <div class="mt-2"><small class="text-secondary">Responsable</small>
+                    <div>
+                        {{ proyecto.nombre_responsable or (proyecto.responsable_user.nombre if proyecto.responsable_user
+                        else '-') }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% set es_staff = current_user.rol in ['admin','jefe','laboratorista'] %}
+
+<div class="row g-3">
+    {# ======== BIMESTRE 1..3 ======== #}
+    {% for n in [1,2,3] %}
+    {% set rb = existentes.get(n) %}
+    <div class="col-md-4">
+        <div class="card bg-dark border-secondary h-100">
+            <div class="card-body d-flex flex-column">
+                <div class="d-flex align-items-center justify-content-between">
+                    <h5 class="card-title mb-0">Bimestre {{ n }}</h5>
+                    {% if rb %}
+                    <span class="badge text-bg-success">Capturado</span>
+                    {% else %}
+                    <span class="badge text-bg-secondary">Pendiente</span>
+                    {% endif %}
+                </div>
+
+                <div class="mt-3 small text-secondary">
+                    {% if rb %}
+                    <div><strong>Periodo:</strong>
+                        {% set _d1 = rb.dia1 or '-' %}
+                        {% set _m1 = rb.mes1 or '-' %}
+                        {% set _a1 = rb.ano1 or '-' %}
+                        {% set _d2 = rb.dia2 or '-' %}
+                        {% set _m2 = rb.mes2 or '-' %}
+                        {% set _a2 = rb.ano2 or '-' %}
+                        {{ _d1 }}/{{ _m1 }}/{{ _a1 }} – {{ _d2 }}/{{ _m2 }}/{{ _a2 }}
+                    </div>
+                    <div class="mt-1">
+                        <strong>Evaluación:</strong>
+                        {{ rb.resp_1 if rb.resp_1 is not none else '-' }},
+                        {{ rb.resp_2 if rb.resp_2 is not none else '-' }},
+                        {{ rb.resp_3 if rb.resp_3 is not none else '-' }},
+                        {{ rb.resp_4 if rb.resp_4 is not none else '-' }},
+                        {{ rb.resp_5 if rb.resp_5 is not none else '-' }},
+                        {{ rb.resp_6 if rb.resp_6 is not none else '-' }},
+                        {{ rb.resp_7 if rb.resp_7 is not none else '-' }}
+                    </div>
+                    {% else %}
+                    <div>Sin información capturada.</div>
+                    {% endif %}
+                </div>
+
+                <div class="mt-auto d-flex gap-2 pt-3">
+                    {% if es_staff %}
+                    {% if rb %}
+                    <a class="btn btn-primary" href="{{ url_for('proyectos.bimestre_editar', rb_id=rb.id) }}">Editar</a>
+                    {% else %}
+                    <a class="btn btn-outline-light"
+                        href="{{ url_for('proyectos.bimestre_nuevo', alumno_id=alumno.id, proyecto_id=proyecto.id, numero=n) }}">
+                        Crear
+                    </a>
+                    {% endif %}
+                    {% else %}
+                    <button class="btn btn-outline-secondary" type="button" disabled
+                        title="Solo el personal captura bimestres.">
+                        Solo personal
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+    {# ======== FORMATO INTERNO ======== #}
+    {% set ex = proyecto.extras or {} %}
+    {% set interno_capt = ex.get('NOMBRE_RESPONSABLE') or ex.get('AREA_RESPONSABLE') or ex.get('CARGO_RESPONSABLE') %}
+    <div class="col-md-6">
+        <div class="card bg-dark border-secondary h-100">
+            <div class="card-body d-flex flex-column">
+                <div class="d-flex align-items-center justify-content-between">
+                    <h5 class="card-title mb-0">Formato interno</h5>
+                    {% if interno_capt %}<span class="badge text-bg-success">Capturado</span>
+                    {% else %}<span class="badge text-bg-secondary">Pendiente</span>{% endif %}
+                </div>
+                <p class="small text-secondary mt-3">
+                    Datos generales del proyecto (se guardan en <em>Proyecto.extras</em>).
+                </p>
+
+                <div class="mt-auto d-flex gap-2 pt-3">
+                    {% if es_staff %}
+                    <a class="btn btn-primary" <a class="btn btn-primary"
+                        href="{{ url_for('proyectos.interno_editar', proyecto_id=proyecto.id, alumno_id=alumno.id) }}">
+                        {{ 'Editar' if interno_capt else 'Crear' }}
+                    </a>
+                    {% else %}
+                    <button class="btn btn-outline-secondary" type="button" disabled
+                        title="Solo el personal edita este formato.">
+                        Solo personal
+                    </button>
+                    {% endif %}
+
+                    {% if current_user.rol == 'alumno' %}
+                    <a class="btn btn-outline-light"
+                        href="{{ url_for('alumnos.descargar', tipo='interno') }}">Descargar</a>
+                    {% else %}
+                    <button class="btn btn-outline-secondary" type="button" disabled
+                        title="La descarga la realiza el alumno.">
+                        Descargar (alumno)
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# ======== REPORTE FINAL ======== #}
+    {% set rb3 = existentes.get(3) %}
+    {# lo consideramos capturado si hay rb3 o si hay algún campo final en extras #}
+    {% set final_capt = rb3 or ex.get('Observaciones_Encargado') or ex.get('Actividad_Final_1')
+    or ex.get('Aprendizaje_Final_1') or ex.get('Beneficio_Final_1')
+    or ex.get('Periodo_Final') or ex.get('Fecha_Entrega_Final') %}
+    <div class="col-md-6">
+        <div class="card bg-dark border-secondary h-100">
+            <div class="card-body d-flex flex-column">
+                <div class="d-flex align-items-center justify-content-between">
+                    <h5 class="card-title mb-0">Reporte final</h5>
+                    {% if final_capt %}<span class="badge text-bg-success">Capturado</span>
+                    {% else %}<span class="badge text-bg-secondary">Pendiente</span>{% endif %}
+                </div>
+                <p class="small text-secondary mt-3">
+                    Se apoya en la evaluación del bimestre 3 y en los campos finales capturados aquí.
+                </p>
+
+                <div class="mt-auto d-flex gap-2 pt-3">
+                    {% if es_staff %}
+                    <a class="btn btn-primary"
+                        href="{{ url_for('proyectos.final_editar', alumno_id=alumno.id, proyecto_id=proyecto.id) }}">
+                        {{ 'Editar' if final_capt else 'Crear' }}
+                    </a>
+                    {% else %}
+                    <button class="btn btn-outline-secondary" type="button" disabled
+                        title="Solo el personal edita este formato.">
+                        Solo personal
+                    </button>
+                    {% endif %}
+
+                    {% if current_user.rol == 'alumno' %}
+                    <a class="btn btn-outline-light"
+                        href="{{ url_for('alumnos.descargar', tipo='final') }}">Descargar</a>
+                    {% else %}
+                    <button class="btn btn-outline-secondary" type="button" disabled
+                        title="La descarga la realiza el alumno.">
+                        Descargar (alumno)
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

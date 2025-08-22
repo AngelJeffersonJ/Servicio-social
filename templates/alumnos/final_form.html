@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block content %}
+<h3 class="mb-3">Reporte Final</h3>
+
+<form method="post" class="row g-3">
+    <div class="col-md-3">
+        <label class="form-label">Municipio</label>
+        <input name="municipio" class="form-control" value="{{ rf.municipio if rf else '' }}">
+    </div>
+    <div class="col-md-3">
+        <label class="form-label">Estado</label>
+        <input name="estado" class="form-control" value="{{ rf.estado if rf else '' }}">
+    </div>
+    <div class="col-md-3">
+        <label class="form-label">Fecha de entrega</label>
+        <input name="fecha_entrega" class="form-control" placeholder="dd/mm/aaaa"
+            value="{{ rf.fecha_entrega if rf else '' }}">
+    </div>
+    <div class="col-md-3">
+        <label class="form-label">Periodo</label>
+        <input name="periodo" class="form-control" placeholder="Ene-Jun 2025" value="{{ rf.periodo if rf else '' }}">
+    </div>
+
+    <hr class="mt-4">
+
+    <div class="col-12"><b>Actividades y logros</b></div>
+    {% for i in range(1,9) %}
+    <div class="col-md-6">
+        <label class="form-label">Actividad {{ i }}</label>
+        <textarea name="act{{i}}" class="form-control"
+            rows="2">{{ getattr(rf, 'act'+i|string) if rf else '' }}</textarea>
+    </div>
+    <div class="col-md-6">
+        <label class="form-label">Logro {{ i }}</label>
+        <textarea name="log{{i}}" class="form-control"
+            rows="2">{{ getattr(rf, 'log'+i|string) if rf else '' }}</textarea>
+    </div>
+    {% endfor %}
+
+    <div class="col-12 mt-3"><b>Aprendizaje y beneficio a la sociedad</b></div>
+    {% for i in range(1,9) %}
+    <div class="col-md-6">
+        <label class="form-label">Aprendizaje {{ i }}</label>
+        <textarea name="apr{{i}}" class="form-control"
+            rows="2">{{ getattr(rf, 'apr'+i|string) if rf else '' }}</textarea>
+    </div>
+    <div class="col-md-6">
+        <label class="form-label">Beneficio {{ i }}</label>
+        <textarea name="ben{{i}}" class="form-control"
+            rows="2">{{ getattr(rf, 'ben'+i|string) if rf else '' }}</textarea>
+    </div>
+    {% endfor %}
+
+    <div class="col-12 mt-3"><b>Calificación final (Responsable)</b> <small class="text-muted">(0..4)</small></div>
+    <div class="col-12">
+        <div class="table-responsive">
+            <table class="table table-dark table-sm align-middle">
+                <thead>
+                    <tr>
+                        <th>Criterio</th>
+                        <th class="text-center">0</th>
+                        <th class="text-center">1</th>
+                        <th class="text-center">2</th>
+                        <th class="text-center">3</th>
+                        <th class="text-center">4</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% set criterios = [
+                    "Cumple en tiempo y forma con las actividades encomendadas",
+                    "Trabaja en equipo y se adapta a nuevas situaciones",
+                    "Muestra liderazgo en las actividades encomendadas",
+                    "Organiza su tiempo y trabaja de manera proactiva",
+                    "Interpreta la realidad y se sensibiliza aportando soluciones",
+                    "Realiza sugerencias innovadoras",
+                    "Tiene iniciativa y muestra espíritu de servicio"
+                    ] %}
+                    {% for i in range(1,8) %}
+                    <tr>
+                        <td>{{ criterios[i-1] }}</td>
+                        {% for v in range(0,5) %}
+                        <td class="text-center">
+                            <input type="radio" name="c{{i}}" value="{{v}}" {% if rf and getattr(rf, 'c' +i|string)==v
+                                %}checked{% endif %}>
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <label class="form-label">Observaciones del responsable</label>
+        <textarea name="observ_resp" class="form-control" rows="3">{{ rf.observ_resp if rf else '' }}</textarea>
+    </div>
+    <div class="col-md-6">
+        <label class="form-label">Observaciones del estudiante</label>
+        <textarea name="observ_est" class="form-control" rows="3">{{ rf.observ_est if rf else '' }}</textarea>
+    </div>
+
+    <div class="col-12">
+        <button class="btn btn-primary">Guardar</button>
+        <a href="{{ url_for('alumnos.mis_documentos') }}" class="btn btn-secondary ms-2">Volver</a>
+    </div>
+</form>
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<h3 class="mb-3">Elegir alumno</h3>
+<form method="get" action="{{ url_for('alumnos.mis_documentos') }}" class="row g-2">
+    <div class="col-md-6">
+        <select name="uid" class="form-select" required>
+            <option value="">— Selecciona —</option>
+            {% for a in alumnos %}
+            <option value="{{ a.id }}">{{ a.nombre }} — {{ a.email }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-3">
+        <button class="btn btn-primary">Ver documentos</button>
+    </div>
+</form>
+{% endblock %}

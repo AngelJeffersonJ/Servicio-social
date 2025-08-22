@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Nuevo departamento · Admin{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="m-0">Nuevo departamento</h3>
+    <a class="btn btn-outline-light" href="{{ url_for('admin.departamentos_list') }}">Volver</a>
+</div>
+
+<form method="post" action="{{ url_for('admin.departamentos_new') }}" class="row gy-3">
+    {{ csrf_token() }}
+    <div class="col-md-8">
+        <label class="form-label">Nombre *</label>
+        <input class="form-control" name="nombre" required placeholder="Ing. Química / Sistemas / etc.">
+    </div>
+
+    <div class="col-12">
+        <button class="btn btn-primary">Guardar</button>
+    </div>
+</form>
+{% endblock %}

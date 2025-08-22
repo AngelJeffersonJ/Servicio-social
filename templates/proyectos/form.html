@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Proyecto{% endblock %}
+{% block content %}
+<h1 class="h4 mb-3">{{ 'Editar proyecto' if proyecto else 'Nuevo proyecto' }}</h1>
+
+<form method="post" class="row g-3">
+  {{ csrf_token() }}
+  <div class="col-md-6">
+    <label class="form-label">Nombre del programa</label>
+    <input name="nombre_programa" class="form-control" required
+      value="{{ (proyecto.nombre_programa if proyecto else (form.nombre_programa if form else '')) }}">
+  </div>
+  <div class="col-md-6">
+    <label class="form-label">Dependencia</label>
+    <input name="nombre_dependencia" class="form-control" required
+      value="{{ (proyecto.nombre_dependencia if proyecto else (form.nombre_dependencia if form else '')) }}">
+  </div>
+  <div class="col-md-6">
+    <label class="form-label">Nombre del responsable</label>
+    <input name="nombre_responsable" class="form-control" required
+      value="{{ (proyecto.nombre_responsable if proyecto else (form.nombre_responsable if form else '')) }}">
+  </div>
+  <div class="col-md-6">
+    <label class="form-label">Cargo del responsable</label>
+    <input name="cargo_responsable" class="form-control" required
+      value="{{ (proyecto.cargo_responsable if proyecto else (form.cargo_responsable if form else '')) }}">
+  </div>
+
+  <div class="col-md-6">
+    <label class="form-label">Municipio</label>
+    <input name="municipio" class="form-control"
+      value="{{ (proyecto.municipio if proyecto else (form.municipio if form else '')) }}">
+  </div>
+  <div class="col-md-6">
+    <label class="form-label">Estado</label>
+    <input name="estado" class="form-control"
+      value="{{ (proyecto.estado if proyecto else (form.estado if form else '')) }}">
+  </div>
+
+  <div class="col-12">
+    <button class="btn btn-primary">Guardar</button>
+    <a class="btn btn-outline-light" href="{{ url_for('proyectos.lista') }}">Cancelar</a>
+  </div>
+</form>
+{% endblock %}

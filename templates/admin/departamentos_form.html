@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Editar departamento{% endblock %}
+{% block content %}
+
+{% set dep = dep if dep is defined else d %}
+
+<h1 class="h4 mb-3">Editar departamento</h1>
+
+<form method="post" action="{{ url_for('admin.departamentos_editar', did=dep.id) }}" class="row g-3">
+  {{ csrf_token() }}
+  <div class="col-md-8">
+    <label class="form-label">Nombre</label>
+    <input name="nombre" class="form-control" required value="{{ request.form.get('nombre', dep.nombre) }}">
+  </div>
+  <div class="col-12">
+    <button class="btn btn-primary">Guardar</button>
+    <a class="btn btn-outline-light" href="{{ url_for('admin.departamentos_list') }}">Volver</a>
+  </div>
+</form>
+
+{% endblock %}

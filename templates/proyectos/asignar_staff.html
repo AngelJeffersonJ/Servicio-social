@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Asignar personal a proyecto{% endblock %}
+{% block content %}
+<h3 class="mb-3">Asignar jefe/laboratorista a proyecto</h3>
+
+<form method="post" class="row g-3">
+    {{ csrf_token() }}
+    <div class="col-md-6">
+        <label class="form-label">Proyecto</label>
+        <select name="proyecto_id" class="form-select" required>
+            <option value="">-- Selecciona --</option>
+            {% for p in proyectos %}
+            <option value="{{ p.id }}">{{ p.nombre or p.nombre_programa }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-6">
+        <label class="form-label">Responsable (jefe / laboratorista)</label>
+        <select name="responsable_id" class="form-select" required>
+            <option value="">-- Selecciona --</option>
+            {% for u in staff %}
+            <option value="{{ u.id }}">{{ u.nombre }} — {{ u.rol }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="col-12">
+        <button class="btn btn-primary">Asignar</button>
+        <a class="btn btn-outline-secondary" href="{{ url_for('proyectos.lista') }}">Cancelar</a>
+    </div>
+</form>
+{% endblock %}

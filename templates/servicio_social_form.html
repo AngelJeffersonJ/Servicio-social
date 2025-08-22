@@ -1,0 +1,692 @@
+{% extends "base.html" %}
+{% block content %}
+
+{# Si llegara un alumno por URL, no mostrar el formulario #}
+{% if current_user.is_authenticated and current_user.rol == 'alumno' %}
+<div class="alert alert-warning mt-3">
+  No tienes acceso a este formulario. Ve a
+  <a class="alert-link" href="{{ url_for('alum.mis_documentos') }}">Mis documentos</a>.
+</div>
+{% else %}
+
+<!doctype html>
+<html lang="es">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Servicio Social – Formularios</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <style>
+    :root {
+      --bg: #0d0f12;
+      --card: #141820ec;
+      --card-2: #12151c;
+      --text: #e8eaed;
+      --muted: #9aa0a6;
+      --accent: #7cc7ff;
+      --accent-2: #8ef6d1;
+      --border: #283140;
+    }
+
+    html,
+    body {
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .container {
+      max-width: 1100px;
+    }
+
+    h1 {
+      font-weight: 700;
+      letter-spacing: .4px;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      margin-top: -.5rem;
+      margin-bottom: 1.25rem;
+      font-size: .95rem;
+    }
+
+    .section-card {
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(255, 255, 255, .02), rgba(255, 255, 255, .01)), var(--card);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, .35), inset 0 1px 0 rgba(255, 255, 255, .03);
+    }
+
+    .card-title {
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+    }
+
+    .badge-pill {
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      color: #0b0f12;
+      font-weight: 700;
+      border-radius: 999px;
+      padding: .25rem .6rem;
+      font-size: .75rem;
+    }
+
+    .form-label {
+      color: #cfd7df;
+      font-size: .82rem;
+    }
+
+    .form-control,
+    .form-select,
+    textarea {
+      background: var(--card-2);
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    .form-control:focus,
+    .form-select:focus,
+    textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 .2rem rgba(124, 199, 255, .15);
+      background: #161b23;
+      color: var(--text);
+    }
+
+    .form-check-input {
+      background: transparent;
+      border-color: #4a5568;
+    }
+
+    .form-check-input:checked {
+      background: linear-gradient(180deg, var(--accent), #60b8ff);
+      border-color: #60b8ff;
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: .92rem;
+    }
+
+    .table-responsive {
+      overflow-x: auto;
+    }
+
+    .w-1200 {
+      min-width: 1200px;
+    }
+
+    .table-dark {
+      --bs-table-bg: transparent;
+      --bs-table-border-color: var(--border);
+    }
+
+    .sticky-th th {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: #141a22;
+      color: #eaf2ff;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .table td,
+    .table th {
+      vertical-align: middle;
+    }
+
+    .table .form-check-input {
+      width: 1.15rem;
+      height: 1.15rem;
+    }
+
+    .divider {
+      border-top: 1px solid var(--border);
+      opacity: .7;
+      margin: 1.25rem 0;
+    }
+
+    .btn-light {
+      color: #0b0f12;
+      font-weight: 700;
+      border: 0;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      box-shadow: 0 8px 22px rgba(124, 199, 255, .25);
+    }
+
+    .btn-light:hover {
+      filter: brightness(.98);
+    }
+
+    .section-hint {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      color: var(--muted);
+      font-size: .85rem;
+    }
+
+    .chip {
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: .1rem .55rem;
+      color: #c9d1d9;
+    }
+
+    .icon {
+      width: 28px;
+      height: 28px;
+      display: inline-grid;
+      place-items: center;
+      border-radius: 8px;
+      background: rgba(124, 199, 255, .12);
+      color: #bfe5ff;
+      font-size: .9rem;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container py-4">
+    <h1 class="mb-1">Servicio Social – Captura</h1>
+    <div class="subtitle">Complete los datos y genere los documentos en formato DOCX.</div>
+
+    <form method="post" class="mb-5" novalidate>
+
+      <!-- ============ DATOS GENERALES (comunes) ========= -->
+      <div class="section-card p-3 p-md-4 mb-4">
+        <div class="card-title">
+          <span class="icon">👤</span>
+          Datos generales del estudiante <span class="badge-pill">Comunes</span>
+        </div>
+        <div class="row g-3">
+          <div class="col-md-4"><label class="form-label">Apellido Paterno</label><input name="Apellido_Paterno"
+              class="form-control form-control-sm"></div>
+          <div class="col-md-4"><label class="form-label">Apellido Materno</label><input name="Apellido_Materno"
+              class="form-control form-control-sm"></div>
+          <div class="col-md-4"><label class="form-label">Nombre(s)</label><input name="Nombre"
+              class="form-control form-control-sm"></div>
+          <div class="col-md-4"><label class="form-label">Carrera</label><input name="Carrera"
+              class="form-control form-control-sm"></div>
+          <div class="col-md-4"><label class="form-label">No. de Control</label><input name="No_Control"
+              class="form-control form-control-sm"></div>
+          <div class="col-md-4"><label class="form-label">Dependencia</label><input name="Nombre_Dependencia"
+              class="form-control form-control-sm"></div>
+          <div class="col-md-6"><label class="form-label">Programa / Proyecto</label><input name="Nombre_Programa"
+              class="form-control form-control-sm"></div>
+          <div class="col-md-3"><label class="form-label">Responsable del proyecto</label><input
+              name="Nombre_Responsable" class="form-control form-control-sm"></div>
+          <div class="col-md-3"><label class="form-label">Cargo del Responsable</label><input name="Cargo_Responsable"
+              class="form-control form-control-sm"></div>
+        </div>
+      </div>
+
+      <!-- ============ REGISTRO INTERNO ========= -->
+      <div class="section-card p-3 p-md-4 mb-4">
+        <div class="card-title">
+          <span class="icon">📄</span>
+          Registro de Proyecto Interno
+        </div>
+
+        <!-- Datos del responsable del proyecto -->
+        <div class="row g-2">
+          <div class="col-md-4">
+            <label class="form-label">Nombre del responsable</label>
+            <input name="NOMBRE_RESPONSABLE" class="form-control form-control-sm">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Cargo del responsable</label>
+            <input name="CARGO_RESPONSABLE" class="form-control form-control-sm">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Departamento o área</label>
+            <input name="AREA_RESPONSABLE" class="form-control form-control-sm">
+          </div>
+        </div>
+
+        <div class="row g-2 mt-1">
+          <div class="col-md-4">
+            <label class="form-label">Teléfono</label>
+            <input name="TELEFONO_RESPONSABLE" type="tel" inputmode="numeric" pattern="^\d{10}$" minlength="10"
+              maxlength="10" class="form-control form-control-sm" placeholder="10 dígitos"
+              title="Debe contener exactamente 10 dígitos">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Correo electrónico</label>
+            <input name="CORREO_RESPONSABLE" type="email" class="form-control form-control-sm"
+              placeholder="usuario@aguascalientes.tecnm.mx" pattern="^[a-zA-Z0-9._%+-]+@aguascalientes\.tecnm\.mx$"
+              title="El correo debe pertenecer al dominio @aguascalientes.tecnm.mx">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Horario para supervisión</label>
+            <input name="HORARIO_RESPONSABLE" class="form-control form-control-sm">
+          </div>
+        </div>
+
+        <!-- Datos del proyecto -->
+        <div class="row g-2 mt-2">
+          <div class="col-md-6"><label class="form-label">Nombre del proyecto</label><input name="Nombre_proyecto"
+              class="form-control form-control-sm"></div>
+          <div class="col-md-3"><label class="form-label">Personas beneficiadas</label><input name="numero_personas"
+              type="number" class="form-control form-control-sm" min="0"></div>
+          <div class="col-md-3"><label class="form-label">Comunidades beneficiadas</label><input name="num_comunidades"
+              type="number" class="form-control form-control-sm" min="0"></div>
+        </div>
+        <div class="row g-2 mt-1">
+          <div class="col-md-6"><label class="form-label">Objetivo del proyecto</label><input name="objetivos_proyecto"
+              class="form-control form-control-sm"></div>
+          <div class="col-md-6"><label class="form-label">Metas</label><input name="metas_proyecto"
+              class="form-control form-control-sm"></div>
+        </div>
+
+        <!-- Impacto positivo -->
+        <div class="divider"></div>
+        <div class="section-hint">
+          <span class="chip">Impacto positivo</span>
+          <span>Marque todos los que apliquen</span>
+        </div>
+        <div class="row row-cols-1 row-cols-md-3 mt-2">
+          <div class="col">
+            <div class="form-check"><input class="form-check-input" type="checkbox" name="opcion1" id="op1"><label
+                class="form-check-label" for="op1">Problemas prioritarios para el país</label></div>
+          </div>
+          <div class="col">
+            <div class="form-check"><input class="form-check-input" type="checkbox" name="opcion2" id="op2"><label
+                class="form-check-label" for="op2">Inclusión e igualdad</label></div>
+          </div>
+          <div class="col">
+            <div class="form-check"><input class="form-check-input" type="checkbox" name="opcion3" id="op3"><label
+                class="form-check-label" for="op3">Medio ambiente y sustentabilidad</label></div>
+          </div>
+        </div>
+
+        <!-- Áreas del conocimiento -->
+        <div class="divider"></div>
+        <div class="section-hint">
+          <span class="chip">Área del conocimiento</span>
+        </div>
+        <div class="row row-cols-1 row-cols-md-2 mt-2">
+          <div class="col">
+            <div class="form-check"><input class="form-check-input" type="checkbox" name="area1" id="area1"><label
+                class="form-check-label" for="area1">Ciencia Agropecuarias</label></div>
+          </div>
+          <div class="col">
+            <div class="form-check"><input class="form-check-input" type="checkbox" name="area2" id="area2"><label
+                class="form-check-label" for="area2">Ciencias de la Salud</label></div>
+          </div>
+          <div class="col">
+            <div class="form-check"><input class="form-check-input" type="checkbox" name="area3" id="area3"><label
+                class="form-check-label" for="area3">Ciencias Naturales y Exactas</label></div>
+          </div>
+          <div class="col">
+            <div class="form-check"><input class="form-check-input" type="checkbox" name="area4" id="area4"><label
+                class="form-check-label" for="area4">Ciencias Sociales y Administrativas</label></div>
+          </div>
+          <div class="col">
+            <div class="form-check"><input class="form-check-input" type="checkbox" name="area5" id="area5"><label
+                class="form-check-label" for="area5">Educación y Humanidades</label></div>
+          </div>
+          <div class="col">
+            <div class="form-check"><input class="form-check-input" type="checkbox" name="area6" id="area6"><label
+                class="form-check-label" for="area6">Ingeniería y Técnica</label></div>
+          </div>
+        </div>
+
+        <!-- Carreras -->
+        <div class="divider"></div>
+        <div class="section-hint">
+          <span class="chip">Carrera solicitada</span>
+        </div>
+        <div class="row row-cols-1 row-cols-md-2 mt-2">
+          <div class="col">
+            <div class="form-check"><input class="form-check-input" type="checkbox" name="carrerera1" id="car1"><label
+                class="form-check-label" for="car1">Ing. Tecnologías de la Inf. y Com.</label></div>
+          </div>
+          <div class="col">
+            <div class="form-check"><input class="form-check-input" type="checkbox" name="carrera2" id="car2"><label
+                class="form-check-label" for="car2">Lic. en Admon.</label></div>
+          </div>
+          <div class="col">
+            <div class="form-check"><input class="form-check-input" type="checkbox" name="carrera3" id="car3"><label
+                class="form-check-label" for="car3">Ing. Química</label></div>
+          </div>
+          <div class="col">
+            <div class="form-check"><input class="form-check-input" type="checkbox" name="carrera4" id="car4"><label
+                class="form-check-label" for="car4">Ing. Industrial</label></div>
+          </div>
+          <div class="col">
+            <div class="form-check"><input class="form-check-input" type="checkbox" name="carrera5" id="car5"><label
+                class="form-check-label" for="car5">Ing. Mecánica</label></div>
+          </div>
+          <div class="col">
+            <div class="form-check"><input class="form-check-input" type="checkbox" name="carrera6" id="car6"><label
+                class="form-check-label" for="car6">Ing. Eléctrica</label></div>
+          </div>
+          <div class="col">
+            <div class="form-check"><input class="form-check-input" type="checkbox" name="carrera7" id="car7"><label
+                class="form-check-label" for="car7">Ing. Electrónica</label></div>
+          </div>
+          <div class="col">
+            <div class="form-check"><input class="form-check-input" type="checkbox" name="carrera8" id="car8"><label
+                class="form-check-label" for="car8">Ing. en Gestión Empresarial</label></div>
+          </div>
+          <div class="col">
+            <div class="form-check"><input class="form-check-input" type="checkbox" name="carrera9" id="car9"><label
+                class="form-check-label" for="car9">Ing. en Materiales</label></div>
+          </div>
+        </div>
+
+        <div class="mt-3">
+          <strong>Turno:</strong>
+          <div class="form-check form-check-inline ms-2"><input class="form-check-input" type="checkbox" name="turno1"
+              id="t1"><label class="form-check-label" for="t1">Matutino</label></div>
+          <div class="form-check form-check-inline"><input class="form-check-input" type="checkbox" name="turno2"
+              id="t2"><label class="form-check-label" for="t2">Vespertino</label></div>
+        </div>
+
+        <h6 class="mt-3 mb-2">Cronograma de actividades <span class="muted">(marca mes → se escribe “X” en el
+            documento)</span></h6>
+        <div class="table-responsive">
+          <table class="table table-dark table-bordered align-middle w-1200">
+            <thead class="sticky-th">
+              <tr>
+                <th style="min-width:280px">Actividad a realizar</th>
+                {% for m in meses %}<th class="text-center">{{ m|capitalize }}</th>{% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for r in range(1,6) %}
+              <tr>
+                <td><input name="actividad{{r}}" class="form-control form-control-sm" placeholder="Actividad {{r}}">
+                </td>
+                {% for m in meses %}
+                <td class="text-center"><input type="checkbox" class="form-check-input" name="{{m}}{{r}}"></td>
+                {% endfor %}
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <button name="accion" value="generar_interno" class="btn btn-light mt-2">Generar Registro Interno
+          (DOCX)</button>
+      </div>
+
+      <!-- ============ REPORTE BIMESTRAL ========= -->
+      <div class="section-card p-3 p-md-4 mb-4">
+        <div class="card-title">
+          <span class="icon">🗓️</span>
+          Reporte Bimestral
+        </div>
+
+        <div class="row g-2">
+          <div class="col-md-3">
+            <label class="form-label">No. de reporte</label>
+            <select class="form-select form-select-sm" name="num_reporte1_2_3" required>
+              <option value="">—</option>
+              <option>1</option>
+              <option>2</option>
+              <option>3</option>
+            </select>
+          </div>
+
+          <!-- Del -->
+          <div class="col-md-3"><label class="form-label">Del día</label>
+            <input name="dia1" type="number" min="1" max="31" required class="form-control form-control-sm">
+          </div>
+          <div class="col-md-3"><label class="form-label">Mes</label>
+            <input name="mes1" type="number" min="1" max="12" required class="form-control form-control-sm">
+          </div>
+          <div class="col-md-3"><label class="form-label">Año</label>
+            <select name="anio1" id="anio1" class="form-select form-select-sm" required></select>
+          </div>
+
+          <!-- Al -->
+          <div class="col-md-3"><label class="form-label">Al día</label>
+            <input name="dia2" type="number" min="1" max="31" required class="form-control form-control-sm">
+          </div>
+          <div class="col-md-3"><label class="form-label">Mes</label>
+            <input name="mes2" type="number" min="1" max="12" required class="form-control form-control-sm">
+          </div>
+          <div class="col-md-3"><label class="form-label">Año</label>
+            <select name="anio2" id="anio2" class="form-select form-select-sm" required></select>
+          </div>
+
+          <div class="col-md-3">
+            <label class="form-label">Bimestre</label>
+            <select name="bimestre" class="form-select form-select-sm" required>
+              <option value="">—</option>
+              {% for o in bim_opts %}<option value="{{o.key}}">{{o.label}}</option>{% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+        <h6 class="mb-2">Actividades realizadas</h6>
+        <div class="row g-2">
+          {% for i in range(1,9) %}
+          <div class="col-md-6"><label class="form-label">Actividad {{i}}</label><input name="Actividad_{{i}}"
+              class="form-control form-control-sm"></div>
+          {% endfor %}
+        </div>
+
+        <div class="divider"></div>
+        <h6 class="mb-1">Evaluación del responsable <span class="chip">escala</span></h6>
+        <p class="muted mb-2">{% for s in scale %}{% if not loop.first %} · {% endif %}{{s}}{% endfor %}</p>
+        <div class="table-responsive">
+          <table class="table table-dark table-bordered align-middle w-1200">
+            <thead class="sticky-th">
+              <tr>
+                <th>Ítem</th>
+                {% for v in range(0,5) %}<th class="text-center">{{v}}</th>{% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in bim_groups %}
+              <tr>
+                <td>{{ row.text }}</td>
+                {% for v in range(0,5) %}
+                <td class="text-center"><input type="radio" class="form-check-input" name="{{row.key}}" value="{{v}}">
+                </td>
+                {% endfor %}
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="mb-2">
+          <label class="form-label">Observaciones del responsable del proyecto</label>
+          <textarea name="Observaciones_Responsable" class="form-control form-control-sm" rows="2"></textarea>
+        </div>
+
+        <button name="accion" value="generar_bimestral" class="btn btn-light">Generar Reporte Bimestral (DOCX)</button>
+      </div>
+
+      <!-- ============ REPORTE FINAL ========= -->
+      <div class="section-card p-3 p-md-4">
+        <div class="card-title">
+          <span class="icon">✅</span>
+          Reporte Final
+        </div>
+
+        <div class="row g-2">
+          <div class="col-md-3"><label class="form-label">Municipio</label><input name="Municipio"
+              class="form-control form-control-sm"></div>
+          <div class="col-md-3"><label class="form-label">Estado</label><input name="Estado"
+              class="form-control form-control-sm"></div>
+          <div class="col-md-3"><label class="form-label">Fecha de entrega</label><input type="date"
+              name="Fecha_Entrega_Final" class="form-control form-control-sm"></div>
+          <div class="col-md-3"><label class="form-label">Periodo</label><input name="Periodo_Final"
+              class="form-control form-control-sm"></div>
+        </div>
+
+        <div class="divider"></div>
+        <h6>Actividades y logros</h6>
+        <div class="row g-2">
+          {% for i in range(1,9) %}
+          <div class="col-md-6"><label class="form-label">Actividad Final {{i}}</label><input
+              name="Actividad_Final_{{i}}" class="form-control form-control-sm"></div>
+          <div class="col-md-6"><label class="form-label">Logro {{i}}</label><input name="Logro_Final_{{i}}"
+              class="form-control form-control-sm"></div>
+          {% endfor %}
+        </div>
+
+        <div class="divider"></div>
+        <h6>Aprendizaje y beneficio</h6>
+        <div class="row g-2">
+          {% for i in range(1,9) %}
+          <div class="col-md-6"><label class="form-label">Aprendizaje {{i}}</label><input name="Aprendizaje_Final_{{i}}"
+              class="form-control form-control-sm"></div>
+          <div class="col-md-6"><label class="form-label">Beneficio {{i}}</label><input name="Beneficio_Final_{{i}}"
+              class="form-control form-control-sm"></div>
+          {% endfor %}
+        </div>
+
+        <div class="divider"></div>
+        <h6 class="mb-1">Calificación final del responsable <span class="chip">escala</span></h6>
+        <p class="muted mb-2">{% for s in scale %}{% if not loop.first %} · {% endif %}{{s}}{% endfor %}</p>
+        <div class="table-responsive">
+          <table class="table table-dark table-bordered align-middle w-1200">
+            <thead class="sticky-th">
+              <tr>
+                <th>Criterio</th>
+                {% for v in range(0,5) %}<th class="text-center">{{v}}</th>{% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for c in final_criteria %}
+              <tr>
+                <td>{{ c.text }}</td>
+                {% for v in range(0,5) %}
+                <td class="text-center"><input type="radio" class="form-check-input" name="{{c.key}}" value="{{v}}">
+                </td>
+                {% endfor %}
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="mb-2">
+          <label class="form-label">Observaciones del responsable del proyecto</label>
+          <textarea name="Observaciones_Responsable" class="form-control form-control-sm" rows="2"></textarea>
+        </div>
+        <div class="mb-2">
+          <label class="form-label">Observaciones del estudiante</label>
+          <textarea name="Observaciones_Estudiante" class="form-control form-control-sm" rows="2"></textarea>
+        </div>
+
+        <button name="accion" value="generar_final" class="btn btn-light">Generar Reporte Final (DOCX)</button>
+      </div>
+
+    </form>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      // ===== Poblar selects de AÑO (actual-15 .. actual+15) =====
+      const yNow = new Date().getFullYear();
+      const years = Array.from({ length: 31 }, (_, i) => yNow - 15 + i);
+      for (const id of ["anio1", "anio2"]) {
+        const sel = document.getElementById(id);
+        if (sel) {
+          sel.innerHTML = '<option value="">—</option>' +
+            years.map(y => `<option value="${y}">${y}</option>`).join("");
+        }
+      }
+
+      // ===== Clamp en tiempo real para día y mes =====
+      function clamp(el) {
+        const min = +(el.min || -1e9), max = +(el.max || 1e9);
+        el.addEventListener("input", () => {
+          if (el.value === "") return;
+          let v = el.value.replace(/\D/g, "");
+          v = v === "" ? "" : String(Math.max(min, Math.min(max, parseInt(v, 10))));
+          el.value = v;
+        });
+      }
+      document.querySelectorAll('input[name="dia1"],input[name="dia2"],input[name="mes1"],input[name="mes2"]').forEach(clamp);
+
+      // ===== Teléfono: solo dígitos y 10 exactos =====
+      const tel = document.querySelector('input[name="TELEFONO_RESPONSABLE"]');
+      if (tel) {
+        tel.addEventListener("input", () => {
+          tel.value = tel.value.replace(/\D/g, "").slice(0, 10);
+          tel.setCustomValidity(/^\d{10}$/.test(tel.value) || tel.value === "" ? "" : "Debe contener exactamente 10 dígitos");
+        });
+      }
+
+      // ===== Correo: dominio obligatorio =====
+      const email = document.querySelector('input[name="CORREO_RESPONSABLE"]');
+      if (email) {
+        const re = /^[a-zA-Z0-9._%+-]+@aguascalientes\.tecnm\.mx$/;
+        email.addEventListener("input", () => {
+          email.setCustomValidity(re.test(email.value) || email.value === "" ? "" : "Usa el dominio @aguascalientes.tecnm.mx");
+        });
+      }
+
+      // ===== Validación: radios y fechas al enviar Bimestral =====
+      const form = document.querySelector("form");
+      form.addEventListener("submit", (e) => {
+        const accion = (e.submitter && e.submitter.value) || "";
+        if (accion !== "generar_bimestral") return;
+
+        if (!form.checkValidity()) {
+          e.preventDefault();
+          form.reportValidity();
+          return;
+        }
+
+        const names = [...new Set(
+          Array.from(form.querySelectorAll('input[type="radio"][name^="TP_resp"]')).map(r => r.name)
+        )];
+        const faltantes = names.filter(n => !form.querySelector(`input[type="radio"][name="${n}"]:checked`));
+        if (faltantes.length) {
+          e.preventDefault();
+          const first = form.querySelector(`input[type="radio"][name="${faltantes[0]}"]`);
+          if (first) first.scrollIntoView({ behavior: "smooth", block: "center" });
+          alert("Selecciona una calificación (0–4) en cada fila de la evaluación del responsable.");
+        }
+      });
+    });
+  </script>
+</body>
+
+</html>
+
+
+<!-- EJEMPLO mínimo por si quieres testear antes de pegar el grande -->
+<h1 class="mb-1">Servicio Social – Captura</h1>
+<p class="text-muted">Completa los datos y genera el documento.</p>
+
+<form method="post">
+  <div class="mt-3">
+    <label class="form-label">¿Qué documento deseas generar?</label>
+    <select class="form-select" name="accion" required>
+      <option value="generar_interno">Registro de Proyecto Interno</option>
+      <option value="generar_bimestral">Reporte Bimestral</option>
+      <option value="generar_final">Reporte Final</option>
+    </select>
+  </div>
+
+  <div class="mt-2">
+    <label class="form-label">Formato</label>
+    <select class="form-select" name="formato">
+      <option value="docx" selected>Word (.docx)</option>
+      <option value="pdf">PDF</option>
+    </select>
+  </div>
+
+  <button class="btn btn-primary mt-3">Generar</button>
+</form>
+
+{% endif %} {# <-- Cierra el if, ANTES del endblock #} {% endblock %}

@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% block title %}Reporte final{% endblock %}
+{% block content %}
+
+<h4 class="mb-3">Reporte final</h4>
+
+<div class="card bg-dark border-secondary mb-3">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div><small class="text-secondary">Alumno</small>
+                    <div>{{ alumno.nombre }}</div>
+                </div>
+                <div class="mt-2"><small class="text-secondary">No. Control</small>
+                    <div>{{ alumno.no_control or alumno.num_control or '' }}</div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div><small class="text-secondary">Proyecto</small>
+                    <div>{{ proyecto.nombre or proyecto.nombre_programa }}</div>
+                </div>
+                <div class="mt-2"><small class="text-secondary">Responsable</small>
+                    <div>{{ proyecto.nombre_responsable or (proyecto.responsable_user.nombre if
+                        proyecto.responsable_user else '-') }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<form method="post">
+    {{ csrf_token() }}
+    {% set fd = form_data|default({}) %}
+
+    {% macro val(name, dflt='') -%}
+    {{ fd.get(name, dflt) }}
+    {%- endmacro %}
+
+    {% macro radio5(name, label) -%}
+    <div class="mb-3">
+        <label class="form-label">{{ label }}</label>
+        <div class="d-flex gap-3 flex-wrap">
+            {% for v in [0,1,2,3,4] %}
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="{{ name }}" id="{{ name }}_{{ v }}" value="{{ v }}"
+                    {% if fd.get(name) is not none and (fd.get(name)|int)==v %}checked{% endif %}>
+                <label class="form-check-label" for="{{ name }}_{{ v }}">{{ v }}</label>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {%- endmacro %}
+
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label class="form-label">Municipio</label>
+            <input name="Municipio" class="form-control" value="{{ val('Municipio') }}">
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Estado</label>
+            <input name="Estado" class="form-control" value="{{ val('Estado') }}">
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Periodo (final)</label>
+            <input name="Periodo_Final" class="form-control" value="{{ val('Periodo_Final') }}">
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Fecha de entrega</label>
+            <input name="Fecha_Entrega_Final" class="form-control" value="{{ val('Fecha_Entrega_Final') }}">
+        </div>
+    </div>
+
+    <hr class="my-4">
+
+    <h6 class="mb-2">Descripción de actividades y logros</h6>
+    <div class="table-responsive">
+        <table class="table table-dark table-sm align-middle">
+            <thead>
+                <tr>
+                    <th style="width:50px;">#</th>
+                    <th>Actividad</th>
+                    <th>Logro</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for i in range(1,9) %}
+                <tr>
+                    <td>{{ i }}</td>
+                    <td>
+                        <input name="Actividad_Final_{{ i }}" class="form-control form-control-sm"
+                            value="{{ val('Actividad_Final_' ~ i) }}">
+                    </td>
+                    <td>
+                        <input name="Logro_Final_{{ i }}" class="form-control form-control-sm"
+                            value="{{ val('Logro_Final_' ~ i) }}">
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <h6 class="mb-2 mt-4">Aprendizaje / Beneficio a la sociedad</h6>
+    <div class="table-responsive">
+        <table class="table table-dark table-sm align-middle">
+            <thead>
+                <tr>
+                    <th style="width:50px;">#</th>
+                    <th>Aprendizaje</th>
+                    <th>Beneficio</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for i in range(1,9) %}
+                <tr>
+                    <td>{{ i }}</td>
+                    <td>
+                        <input name="Aprendizaje_Final_{{ i }}" class="form-control form-control-sm"
+                            value="{{ val('Aprendizaje_Final_' ~ i) }}">
+                    </td>
+                    <td>
+                        <input name="Beneficio_Final_{{ i }}" class="form-control form-control-sm"
+                            value="{{ val('Beneficio_Final_' ~ i) }}">
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="mb-3 mt-3">
+        <label class="form-label">Observaciones del responsable</label>
+        <textarea name="Observaciones_Encargado" class="form-control"
+            rows="4">{{ val('Observaciones_Encargado') }}</textarea>
+    </div>
+
+    <hr class="my-4">
+
+    <h6 class="mb-2">Calificación final del responsable (0–4)</h6>
+    {{ radio5('resp_1', '1. Cumple en tiempo y forma') }}
+    {{ radio5('resp_2', '2. Trabaja en equipo y se adapta') }}
+    {{ radio5('resp_3', '3. Muestra liderazgo') }}
+    {{ radio5('resp_4', '4. Organiza su tiempo y es proactivo') }}
+    {{ radio5('resp_5', '5. Interpreta la realidad y aporta soluciones') }}
+    {{ radio5('resp_6', '6. Sugerencias innovadoras') }}
+    {{ radio5('resp_7', '7. Iniciativa y servicio') }}
+
+    <div class="d-flex gap-2 mt-3">
+        <a href="{{ volver_url or url_for('proyectos.lista') }}" class="btn btn-outline-light">Volver</a>
+        <button class="btn btn-primary">{{ 'Guardar cambios' if form_data else 'Guardar' }}</button>
+    </div>
+</form>
+
+{% endblock %}

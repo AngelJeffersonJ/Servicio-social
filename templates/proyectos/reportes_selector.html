@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block title %}Capturar Reporte Bimestral{% endblock %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h4 m-0">Capturar Reporte Bimestral</h1>
+</div>
+
+{# ===================== TABLA DE ASIGNACIONES (si viene) ===================== #}
+{% if asignaciones and asignaciones|length > 0 %}
+<div class="card bg-dark border-secondary mb-4">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="card-title m-0">Asignaciones</h5>
+            <input id="filtro" type="search" class="form-control form-control-sm w-auto" placeholder="Filtrar...">
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-dark table-striped align-middle" id="tabla-asignaciones">
+                <thead>
+                    <tr>
+                        <th>Alumno</th>
+                        <th>Matrícula</th>
+                        <th>Proyecto</th>
+                        <th>Dependencia</th>
+                        <th>Responsable</th>
+                        <th class="text-end">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ap in asignaciones %}
+                    {% set alu = ap.alumno %}
+                    {% set prj = ap.proyecto %}
+                    <tr>
+                        <td>{{ alu.nombre or '-' }}</td>
+                        <td>{{ alu.no_control or '-' }}</td>
+                        <td>{{ prj.nombre or prj.nombre_programa or '-' }}</td>
+                        <td>{{ prj.nombre_dependencia or (prj.departamento.nombre if prj.departamento else '-') }}</td>
+                        <td>
+                            {{ prj.nombre_responsable
+                            or (prj.responsable_user.nombre if prj.responsable_user else '-') }}
+                        </td>
+                        <td class="text-end">
+                            <a class="btn btn-sm btn-outline-light" href="{{ url_for('proyectos.bimestres_list',
+                                  alumno_id=alu.id, proyecto_id=prj.id) }}">
+                                Ver bimestres
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{# ===================== SELECCIÓN MANUAL (fallback / extra) ===================== #}
+<div class="card bg-dark border-secondary">
+    <div class="card-body">
+        <h5 class="card-title">Buscar por alumno y proyecto</h5>
+        <p class="text-secondary small mb-3">
+            Selecciona un alumno y un proyecto para ir al listado de Bimestre 1/2/3.
+        </p>
+
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label">Alumno</label>
+                <select id="sel-alumno" class="form-select">
+                    <option value="">— Selecciona —</option>
+                    {% if alumnos %}
+                    {% for a in alumnos %}
+                    <option value="{{ a.id }}">
+                        {{ a.nombre }}{% if a.no_control %} — {{ a.no_control }}{% endif %}
+                    </option>
+                    {% endfor %}
+                    {% endif %}
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Proyecto</label>
+                <select id="sel-proyecto" class="form-select">
+                    <option value="">— Selecciona —</option>
+                    {% if proyectos %}
+                    {% for p in proyectos %}
+                    <option value="{{ p.id }}">
+                        {{ p.nombre or p.nombre_programa }}
+                    </option>
+                    {% endfor %}
+                    {% endif %}
+                </select>
+            </div>
+        </div>
+
+        <div class="mt-3 d-flex gap-2">
+            <button id="btn-ir" class="btn btn-primary">Ir a bimestres</button>
+            <small class="text-secondary">Esto redirige a la ruta de bimestres con los IDs elegidos.</small>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Filtro simple por texto en la tabla de asignaciones
+    (function () {
+        const filtro = document.getElementById('filtro');
+        const tabla = document.getElementById('tabla-asignaciones');
+        if (!filtro || !tabla) return;
+
+        filtro.addEventListener('input', function () {
+            const q = this.value.toLowerCase();
+            for (const tr of tabla.tBodies[0].rows) {
+                const txt = tr.innerText.toLowerCase();
+                tr.style.display = txt.includes(q) ? '' : 'none';
+            }
+        });
+    })();
+
+    // Redirección a /proyectos/bimestres/<alumno_id>/<proyecto_id> sin romper Jinja
+    (function () {
+        const btn = document.getElementById('btn-ir');
+        if (!btn) return;
+
+        // Construimos una URL base válida con ints (0,0) y luego sustituimos en cliente
+        const base = "{{ url_for('proyectos.bimestres_list', alumno_id=0, proyecto_id=0) }}";
+
+        btn.addEventListener('click', function () {
+            const a = document.getElementById('sel-alumno').value;
+            const p = document.getElementById('sel-proyecto').value;
+            if (!a || !p) {
+                alert('Selecciona alumno y proyecto.');
+                return;
+            }
+            // Reemplaza solamente el sufijo final "0/0" por "a/p"
+            const url = base.replace(/0\/0$/, `${a}/${p}`);
+            window.location.href = url;
+        });
+    })();
+</script>
+
+{% endblock %}

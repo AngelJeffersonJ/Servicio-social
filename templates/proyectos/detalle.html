@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Detalle proyecto{% endblock %}
+{% block content %}
+<h1 class="h4 mb-3">Detalle del proyecto</h1>
+
+<div class="card bg-secondary-subtle text-dark">
+    <div class="card-body">
+        <dl class="row mb-0">
+            <dt class="col-sm-3">Programa</dt>
+            <dd class="col-sm-9">{{ proyecto.programa }}</dd>
+            <dt class="col-sm-3">Dependencia</dt>
+            <dd class="col-sm-9">{{ proyecto.dependencia }}</dd>
+            <dt class="col-sm-3">Responsable</dt>
+            <dd class="col-sm-9">{{ proyecto.responsable }}</dd>
+            <dt class="col-sm-3">Cargo</dt>
+            <dd class="col-sm-9">{{ proyecto.cargo }}</dd>
+            <dt class="col-sm-3">Municipio</dt>
+            <dd class="col-sm-9">{{ proyecto.municipio }}</dd>
+            <dt class="col-sm-3">Estado</dt>
+            <dd class="col-sm-9">{{ proyecto.estado }}</dd>
+        </dl>
+    </div>
+</div>
+
+<a class="btn btn-outline-light mt-3" href="{{ url_for('proyectos.lista') }}">Volver</a>
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4>Alumnos</h4>
+  <a class="btn btn-primary btn-sm" href="{{ url_for('alum.nuevo') }}">Nuevo</a>
+</div>
+<table class="table table-dark table-bordered">
+  <thead>
+    <tr><th>Nombre</th><th>Email</th><th>Carrera</th><th>Semestre</th><th>Proyecto</th><th></th></tr>
+  </thead>
+  <tbody>
+  {% for a in alumnos %}
+    <tr>
+      <td>{{ a.usuario.nombre }}</td>
+      <td>{{ a.usuario.email }}</td>
+      <td>{{ a.carrera or '-' }}</td>
+      <td>{{ a.semestre or '-' }}</td>
+      <td>{{ a.proyecto.nombre if a.proyecto else '-' }}</td>
+      <td>
+        <a class="btn btn-outline-light btn-sm" href="{{ url_for('alum.editar', alumno_id=a.id) }}">Editar</a>
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

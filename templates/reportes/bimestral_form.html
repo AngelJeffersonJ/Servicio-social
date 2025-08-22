@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}Reporte Bimestral {{ num }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h2 class="mb-3">Reporte Bimestral {{ num }}</h2>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <strong>Alumno:</strong> {{ alumno.full_name if alumno.full_name else alumno.name }} ({{ alumno.email
+            }})<br>
+            <strong>No. Control:</strong> {{ alumno.alumno_info.no_control if alumno.alumno_info else '' }}<br>
+            <strong>Carrera:</strong> {{ alumno.alumno_info.carrera if alumno.alumno_info else '' }}<br>
+            <hr>
+            <strong>Proyecto:</strong> {{ proyecto.nombre_programa }}<br>
+            <strong>Dependencia:</strong> {{ proyecto.nombre_dependencia }}<br>
+            <strong>Responsable:</strong> {{ proyecto.nombre_responsable }} — {{ proyecto.cargo_responsable }}
+        </div>
+    </div>
+
+    <form method="post">
+        {{ csrf_token() if csrf_token else '' }}
+
+        <div class="row g-3">
+            <div class="col-12">
+                <h5>Periodo reportado</h5>
+            </div>
+            <div class="col-2">
+                <label class="form-label">Del día</label>
+                <input name="dia1" class="form-control" value="{{ reporte.dia1 if reporte else '' }}">
+            </div>
+            <div class="col-5">
+                <label class="form-label">Mes</label>
+                <input name="mes1" class="form-control" value="{{ reporte.mes1 if reporte else '' }}">
+            </div>
+            <div class="col-5">
+                <label class="form-label">Año</label>
+                <input name="anio1" class="form-control" value="{{ reporte.anio1 if reporte else '' }}">
+            </div>
+
+            <div class="col-2">
+                <label class="form-label">Al día</label>
+                <input name="dia2" class="form-control" value="{{ reporte.dia2 if reporte else '' }}">
+            </div>
+            <div class="col-5">
+                <label class="form-label">Mes</label>
+                <input name="mes2" class="form-control" value="{{ reporte.mes2 if reporte else '' }}">
+            </div>
+            <div class="col-5">
+                <label class="form-label">Año</label>
+                <input name="anio2" class="form-control" value="{{ reporte.anio2 if reporte else '' }}">
+            </div>
+
+            <div class="col-12 mt-4">
+                <h5>Actividades (1–8)</h5>
+            </div>
+            {% for i in range(1,9) %}
+            <div class="col-12">
+                <label class="form-label">Actividad {{ i }}</label>
+                <textarea name="activ_{{ i }}" rows="2"
+                    class="form-control">{{ getattr(reporte, 'actividad_' ~ i) if reporte else '' }}</textarea>
+            </div>
+            {% endfor %}
+
+            <div class="col-12 mt-4">
+                <h5>Evaluación del responsable (0..4)</h5>
+            </div>
+            {% for i in range(1,8) %}
+            <div class="col-md-4">
+                <label class="form-label">Criterio {{ i }}</label>
+                <select name="tp_{{ i }}" class="form-select">
+                    <option value="" {% if not reporte %}selected{% endif %}></option>
+                    {% for v in [0,1,2,3,4] %}
+                    {% set cur = getattr(reporte, 'tp_resp_' ~ i) if reporte else None %}
+                    <option value="{{ v }}" {% if cur is not none and cur==v %}selected{% endif %}>{{ v }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endfor %}
+
+            <div class="col-12">
+                <label class="form-label">Observaciones del responsable</label>
+                <textarea name="observaciones" rows="3"
+                    class="form-control">{{ reporte.observaciones_responsable if reporte else '' }}</textarea>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <button class="btn btn-primary">Guardar</button>
+            <a class="btn btn-secondary" href="{{ url_for('proyectos.detalle', id=proyecto.id) }}">Volver</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

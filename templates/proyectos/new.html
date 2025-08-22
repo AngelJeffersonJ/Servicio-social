@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Nuevo proyecto · Servicio Social{% endblock %}
+{% block content %}
+<h3 class="mb-3">Nuevo proyecto</h3>
+
+<form method="post" action="{{ url_for('proyectos.nuevo') }}" class="row g-3">
+    <div class="col-12 col-lg-6">
+        <label class="form-label">Nombre del proyecto</label>
+        <input type="text" name="nombre" class="form-control" value="{{ request.form.get('nombre','') }}" required>
+    </div>
+
+    <div class="col-12 col-lg-3">
+        <label class="form-label">Departamento</label>
+        <select name="departamento_id" class="form-select">
+            <option value="">—</option>
+            {% for d in deps %}
+            <option value="{{ d.id }}" {% if request.form.get('departamento_id', type=int)==d.id %}selected{% endif %}>
+                {{ d.nombre }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="col-12 col-lg-3">
+        <label class="form-label">Responsable (usuario)</label>
+        <select name="responsable_id" class="form-select">
+            <option value="">—</option>
+            {% for u in responsables %}
+            <option value="{{ u.id }}" {% if request.form.get('responsable_id', type=int)==u.id %}selected{% endif %}>
+                {{ u.nombre }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="col-12">
+        <button class="btn btn-primary" type="submit">Guardar</button>
+        <a class="btn btn-outline-light" href="{{ url_for('proyectos.lista') }}">Cancelar</a>
+    </div>
+</form>
+{% endblock %}

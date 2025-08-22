@@ -1,0 +1,56 @@
+:root {
+    --app-bg: #151a1f;
+    --app-bg-2: #1b2127;
+    --panel: #20262d;
+}
+
+body.bg-app {
+    background: var(--app-bg);
+}
+
+.bg-app-2 {
+    background: var(--app-bg-2) !important;
+}
+
+.text-body {
+    color: #e7eaee;
+}
+
+.card.bg-panel {
+    background: var(--panel);
+    border-color: #2b323a !important;
+}
+
+.form-label,
+label {
+    color: #e7eaee;
+}
+
+.form-control,
+.form-select {
+    background: #11151a;
+    border-color: #2b323a;
+    color: #e7eaee;
+}
+
+.form-control:focus,
+.form-select:focus {
+    background: #0e1216;
+    color: #fff;
+    border-color: #4b89ff;
+    box-shadow: none;
+}
+
+.table thead th {
+    border-bottom: 1px solid #343b44;
+}
+
+.table td,
+.table th {
+    border-color: #2b323a !important;
+}
+
+.flash-stack {
+    position: relative;
+    z-index: 5;
+}

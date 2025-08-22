@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% block content %}
+<h3 class="mb-3">Editar proyecto</h3>
+
+{% set ex = (p.extras or {}) %}
+
+{# Helper para marcar checks cuando en extras venga "on", "X", "1", true, etc. #}
+{% macro is_on(key) -%}
+{% if ex.get(key) in ['on','ON','x','X','1', 1, true, 'true', 'True'] %}checked{% endif %}
+{%- endmacro %}
+
+<form method="post" class="row g-3">
+
+    <div class="col-md-6">
+        <label class="form-label">Nombre del proyecto</label>
+        <input name="nombre" class="form-control" value="{{ p.nombre }}" required>
+    </div>
+
+    <div class="col-md-3">
+        <label class="form-label">Departamento</label>
+        <select name="departamento_id" class="form-select">
+            <option value="">—</option>
+            {% for d in departamentos %}
+            <option value="{{ d.id }}" {{ 'selected' if p.departamento_id==d.id else '' }}>
+                {{ d.nombre }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="col-md-3">
+        <label class="form-label">Responsable (usuario)</label>
+        <select name="responsable_id" class="form-select">
+            <option value="">—</option>
+            {% for r in responsables %}
+            <option value="{{ r.id }}" {{ 'selected' if p.responsable_id==r.id else '' }}>
+                {{ r.nombre }} ({{ r.rol }})
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <hr class="mt-4">
+
+    <div class="col-md-4">
+        <label class="form-label">Nombre responsable (impresión)</label>
+        <input name="responsable_nombre" class="form-control" value="{{ ex.get('responsable_nombre','') }}">
+    </div>
+    <div class="col-md-4">
+        <label class="form-label">Cargo del responsable</label>
+        <input name="responsable_cargo" class="form-control" value="{{ ex.get('responsable_cargo','') }}">
+    </div>
+    <div class="col-md-4">
+        <label class="form-label">Área / Dependencia</label>
+        <input name="area_responsable" class="form-control" value="{{ ex.get('area_responsable','') }}">
+    </div>
+
+    <div class="col-md-4">
+        <label class="form-label">Teléfono</label>
+        <input name="telefono_responsable" class="form-control" value="{{ ex.get('telefono_responsable','') }}">
+    </div>
+    <div class="col-md-4">
+        <label class="form-label">Correo</label>
+        <input name="correo_responsable" type="email" class="form-control"
+            value="{{ ex.get('correo_responsable','') }}">
+    </div>
+    <div class="col-md-4">
+        <label class="form-label">Horario de visita</label>
+        <input name="horario_responsable" class="form-control" value="{{ ex.get('horario_responsable','') }}">
+    </div>
+
+    <div class="col-md-3">
+        <label class="form-label">Periodo</label>
+        <input name="periodo" class="form-control" value="{{ ex.get('periodo','') }}">
+    </div>
+    <div class="col-md-3">
+        <label class="form-label"># personas beneficiadas</label>
+        <input name="num_personas" type="number" class="form-control" value="{{ ex.get('num_personas','') }}">
+    </div>
+    <div class="col-md-3">
+        <label class="form-label"># comunidades</label>
+        <input name="num_comunidades" type="number" class="form-control" value="{{ ex.get('num_comunidades','') }}">
+    </div>
+    <div class="col-md-3">
+        <label class="form-label"># estudiantes solicitados</label>
+        <input name="num_estudiantes" type="number" class="form-control" value="{{ ex.get('num_estudiantes','') }}">
+    </div>
+
+    <div class="col-12">
+        <label class="form-label">Objetivos</label>
+        <textarea name="objetivos" class="form-control" rows="2">{{ ex.get('objetivos','') }}</textarea>
+    </div>
+    <div class="col-12">
+        <label class="form-label">Metas</label>
+        <textarea name="metas" class="form-control" rows="2">{{ ex.get('metas','') }}</textarea>
+    </div>
+
+    <div class="col-12">
+        <label class="form-label">Impacto positivo:</label>
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="op_problemas_pais" {{ is_on('op_problemas_pais') }}>
+            <label class="form-check-label">Los problemas prioritarios para el país</label>
+        </div>
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="op_inclusion_igualdad" {{
+                is_on('op_inclusion_igualdad') }}>
+            <label class="form-check-label">La inclusión e igualdad</label>
+        </div>
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="op_medio_ambiente" {{ is_on('op_medio_ambiente') }}>
+            <label class="form-check-label">El medio ambiente y sustentabilidad</label>
+        </div>
+    </div>
+
+    <div class="col-12">
+        <label class="form-label">Carreras solicitadas:</label>
+        <div class="row">
+            {% macro carrera(id, label) -%}
+            <div class="col-md-3">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="{{ id }}" {{ is_on(id) }}>
+                    <label class="form-check-label">{{ label }}</label>
+                </div>
+            </div>
+            {%- endmacro %}
+
+            {{ carrera('c_sistemas','Ing. Sistemas') }}
+            {{ carrera('c_industrial','Ing. Industrial') }}
+            {{ carrera('c_mecanica','Ing. Mecánica') }}
+            {{ carrera('c_electrica','Ing. Eléctrica') }}
+            {{ carrera('c_electronica','Ing. Electrónica') }}
+            {{ carrera('c_gestion','Ing. Gestión') }}
+            {{ carrera('c_materiales','Ing. en Materiales') }}
+            {{ carrera('c_quimica','Ing. Química') }}
+            {{ carrera('c_admon','Lic. en Admon.') }}
+        </div>
+    </div>
+
+    <div class="col-12">
+        <label class="form-label">Turno</label><br>
+        <div class="form-check form-check-inline">
+            <input class="form-check-input" type="checkbox" name="turno_matutino" {{ is_on('turno_matutino') }}>
+            <label class="form-check-label">Matutino</label>
+        </div>
+        <div class="form-check form-check-inline">
+            <input class="form-check-input" type="checkbox" name="turno_vespertino" {{ is_on('turno_vespertino') }}>
+            <label class="form-check-label">Vespertino</label>
+        </div>
+    </div>
+
+    <div class="col-12 mt-3">
+        <button class="btn btn-primary">Guardar</button>
+        <a class="btn btn-secondary ms-2" href="{{ url_for('proyectos.lista') }}">Cancelar</a>
+    </div>
+</form>
+{% endblock %}

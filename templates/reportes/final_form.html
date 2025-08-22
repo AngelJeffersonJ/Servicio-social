@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Reporte Final{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h2 class="mb-3">Reporte Final</h2>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <strong>Alumno:</strong> {{ alumno.full_name if alumno.full_name else alumno.name }} ({{ alumno.email
+            }})<br>
+            <strong>No. Control:</strong> {{ alumno.alumno_info.no_control if alumno.alumno_info else '' }}<br>
+            <strong>Carrera:</strong> {{ alumno.alumno_info.carrera if alumno.alumno_info else '' }}<br>
+            <hr>
+            <strong>Proyecto:</strong> {{ proyecto.nombre_programa }}<br>
+            <strong>Dependencia:</strong> {{ proyecto.nombre_dependencia }}<br>
+            <strong>Responsable:</strong> {{ proyecto.nombre_responsable }} — {{ proyecto.cargo_responsable }}
+        </div>
+    </div>
+
+    <form method="post">
+        {{ csrf_token() if csrf_token else '' }}
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label">Periodo</label>
+                <input name="periodo_final" class="form-control" value="{{ reporte.periodo_final if reporte else '' }}">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Fecha de entrega</label>
+                <input name="fecha_entrega_final" class="form-control"
+                    value="{{ reporte.fecha_entrega_final if reporte else '' }}">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Municipio</label>
+                <input name="municipio" class="form-control" value="{{ reporte.municipio if reporte else '' }}">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Estado</label>
+                <input name="estado" class="form-control" value="{{ reporte.estado if reporte else '' }}">
+            </div>
+
+            <div class="col-12 mt-4">
+                <h5>Actividades y logros (1–8)</h5>
+            </div>
+            {% for i in range(1,9) %}
+            <div class="col-md-6">
+                <label class="form-label">Actividad {{ i }}</label>
+                <textarea name="act_{{ i }}" rows="2"
+                    class="form-control">{{ getattr(reporte, 'actividad_' ~ i) if reporte else '' }}</textarea>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Logro {{ i }}</label>
+                <textarea name="log_{{
+          i }}" rows="2" class="form-control">{{ getattr(reporte, 'logro_' ~ i) if reporte else '' }}</textarea>
+            </div>
+            {% endfor %}
+
+            <div class="col-12 mt-4">
+                <h5>Aprendizajes y beneficios (1–8)</h5>
+            </div>
+            {% for i in range(1,9) %}
+            <div class="col-md-6">
+                <label class="form-label">Aprendizaje {{ i }}</label>
+                <textarea name="ap_{{ i }}" rows="2"
+                    class="form-control">{{ getattr(reporte, 'aprendizaje_' ~ i) if reporte else '' }}</textarea>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Beneficio {{ i }}</label>
+                <textarea name="ben_{{ i }}" rows="2"
+                    class="form-control">{{ getattr(reporte, 'beneficio_' ~ i) if reporte else '' }}</textarea>
+            </div>
+            {% endfor %}
+
+            <div class="col-12 mt-4">
+                <h5>Evaluación final del responsable (0..4)</h5>
+            </div>
+            {% for i in range(1,8) %}
+            <div class="col-md-4">
+                <label class="form-label">Criterio {{ i }}</label>
+                <select name="tp_final_{{ i }}" class="form-select">
+                    <option value="" {% if not reporte %}selected{% endif %}></option>
+                    {% for v in [0,1,2,3,4] %}
+                    {% set cur = getattr(reporte, 'tp_final_' ~ i) if reporte else None %}
+                    <option value="{{ v }}" {% if cur is not none and cur==v %}selected{% endif %}>{{ v }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endfor %}
+
+            <div class="col-12">
+                <label class="form-label">Observaciones del encargado</label>
+                <textarea name="observaciones_encargado" rows="3"
+                    class="form-control">{{ reporte.observaciones_encargado if reporte else '' }}</textarea>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <button class="btn btn-primary">Guardar</button>
+            <a class="btn btn-secondary" href="{{ url_for('proyectos.detalle', id=proyecto.id) }}">Volver</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

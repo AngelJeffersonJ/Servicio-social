@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Panel Admin{% endblock %}
+{% block content %}
+<h3 class="mb-4">Panel de administración</h3>
+<div class="row g-3">
+    <div class="col-md-4">
+        <a class="card bg-panel border-secondary text-decoration-none" href="{{ url_for('admin.usuarios_list') }}">
+            <div class="card-body">
+                <h5 class="card-title mb-1">Usuarios</h5>
+                <p class="text-secondary mb-0 small">Ver / crear / editar</p>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-4">
+        <a class="card bg-panel border-secondary text-decoration-none" href="{{ url_for('admin.departamentos_list') }}">
+            <div class="card-body">
+                <h5 class="card-title mb-1">Departamentos</h5>
+                <p class="text-secondary mb-0 small">Catálogo</p>
+            </div>
+        </a>
+    </div>
+</div>
+{% endblock %}

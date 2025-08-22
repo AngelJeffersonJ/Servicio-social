@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block title %}Nuevo usuario{% endblock %}
+
+{% block content %}
+<h3 class="mb-3">Nuevo usuario</h3>
+
+<form method="post" class="row g-3">
+
+    <div class="col-md-6">
+        <label class="form-label">Nombre *</label>
+        <input name="nombre" class="form-control" value="{{ form.get('nombre') if form else '' }}" required>
+    </div>
+
+    <div class="col-md-6">
+        <label class="form-label">Email *</label>
+        <input name="email" type="email" class="form-control" value="{{ form.get('email') if form else '' }}" required>
+    </div>
+
+    <div class="col-md-4">
+        <label class="form-label">Rol *</label>
+        <select name="rol" class="form-select" required onchange="toggleByRole()">
+            {% for val,label in roles %}
+            {% set sel = (form and form.get('rol','alumno')==val) or (not form and val=='alumno') %}
+            <option value="{{ val }}" {{ 'selected' if sel else '' }}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="col-md-4">
+        <label class="form-label">Departamento (opcional)</label>
+        <select name="departamento_id" class="form-select">
+            <option value="">—</option>
+            {% for d in departamentos %}
+            {% set sel = form and form.get('departamento_id') and form.get('departamento_id')|string == d.id|string %}
+            <option value="{{ d.id }}" {{ 'selected' if sel else '' }}>{{ d.nombre }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="col-md-4">
+        <label class="form-label">Contraseña *</label>
+        <input name="password" type="password" class="form-control" required>
+    </div>
+
+    <div class="col-12">
+        <hr>
+    </div>
+    <h5 class="px-2">Datos personales</h5>
+
+    <div class="col-md-6">
+        <label class="form-label">Apellido paterno <span class="text-warning">(obligatorio para alumno)</span></label>
+        <input name="apellido_paterno" class="form-control" value="{{ form.get('apellido_paterno') if form else '' }}">
+    </div>
+
+    <div class="col-md-6">
+        <label class="form-label">Apellido materno <span class="text-warning">(obligatorio para alumno)</span></label>
+        <input name="apellido_materno" class="form-control" value="{{ form.get('apellido_materno') if form else '' }}">
+    </div>
+
+    <!-- Sección ALUMNO -->
+    <div id="section-alumno" class="row g-3">
+        <div class="col-md-6">
+            <label class="form-label">No. de control <span class="text-warning">(obligatorio para alumno)</span></label>
+            <input name="no_control" class="form-control" value="{{ form.get('no_control') if form else '' }}">
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Carrera <span class="text-warning">(obligatorio para alumno)</span></label>
+            <input name="carrera" class="form-control" value="{{ form.get('carrera') if form else '' }}">
+        </div>
+    </div>
+
+    <!-- Sección STAFF -->
+    <div id="section-staff" class="row g-3">
+        <div class="col-md-12">
+            <label class="form-label">Cargo / Puesto <span class="text-warning">(obligatorio para
+                    laboratorista/jefe/admin)</span></label>
+            <input name="cargo" class="form-control" value="{{ form.get('cargo') if form else '' }}">
+        </div>
+    </div>
+
+    <div class="col-12 mt-3">
+        <button class="btn btn-primary">Guardar</button>
+        <a class="btn btn-secondary ms-2" href="{{ url_for('admin.usuarios_list') }}">Volver</a>
+    </div>
+</form>
+
+<script>
+    function setRequired(sel, isReq) {
+        const el = document.querySelector(sel);
+        if (!el) return;
+        if (isReq) el.setAttribute('required', 'required');
+        else el.removeAttribute('required');
+    }
+    function show(id, on) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.style.display = on ? '' : 'none';
+    }
+    function toggleByRole() {
+        const role = document.querySelector('select[name="rol"]').value;
+        const alumno = role === 'alumno';
+        show('section-alumno', alumno);
+        show('section-staff', !alumno);
+        setRequired('input[name="apellido_paterno"]', alumno);
+        setRequired('input[name="apellido_materno"]', alumno);
+        setRequired('input[name="no_control"]', alumno);
+        setRequired('input[name="carrera"]', alumno);
+        setRequired('input[name="cargo"]', !alumno);
+    }
+    // estado inicial
+    document.addEventListener('DOMContentLoaded', toggleByRole);
+</script>
+{% endblock %}

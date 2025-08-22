@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block content %}
+<h3 class="mb-3">Reporte Bimestral {{ n }}</h3>
+
+<form method="post" class="row g-3">
+    <div class="col-12"><b>Periodo evaluado</b></div>
+    <div class="col-2">
+        <label class="form-label">Del día</label>
+        <input name="del_dia" class="form-control" value="{{ rb.del_dia if rb else '' }}">
+    </div>
+    <div class="col-3">
+        <label class="form-label">Mes</label>
+        <input name="del_mes" class="form-control" placeholder="Ene / Feb / ..." value="{{ rb.del_mes if rb else '' }}">
+    </div>
+    <div class="col-2">
+        <label class="form-label">Año</label>
+        <input name="del_anio" class="form-control" value="{{ rb.del_anio if rb else '' }}">
+    </div>
+    <div class="col-2">
+        <label class="form-label">Al día</label>
+        <input name="al_dia" class="form-control" value="{{ rb.al_dia if rb else '' }}">
+    </div>
+    <div class="col-2">
+        <label class="form-label">Mes</label>
+        <input name="al_mes" class="form-control" value="{{ rb.al_mes if rb else '' }}">
+    </div>
+    <div class="col-1">
+        <label class="form-label">Año</label>
+        <input name="al_anio" class="form-control" value="{{ rb.al_anio if rb else '' }}">
+    </div>
+
+    <div class="col-12 mt-2"><b>Evaluación (0 Insuficiente … 4 Excelente)</b></div>
+    <div class="col-12">
+        <div class="table-responsive">
+            <table class="table table-dark table-sm align-middle">
+                <thead>
+                    <tr>
+                        <th style="width:34%">Criterio</th>
+                        <th style="width:11%">Evaluador</th>
+                        <th class="text-center">0</th>
+                        <th class="text-center">1</th>
+                        <th class="text-center">2</th>
+                        <th class="text-center">3</th>
+                        <th class="text-center">4</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% set criterios = [
+                    "Cumple en tiempo y forma con las actividades encomendadas",
+                    "Trabaja en equipo y se adapta a nuevas situaciones",
+                    "Muestra liderazgo en las actividades encomendadas",
+                    "Organiza su tiempo y trabaja de manera proactiva",
+                    "Interpreta la realidad y aporta soluciones",
+                    "Realiza sugerencias innovadoras",
+                    "Tiene iniciativa y espíritu de servicio"
+                    ] %}
+                    {% for i in range(1,8) %}
+                    <tr>
+                        <td rowspan="2">{{ criterios[i-1] }}</td>
+                        <td>Responsable</td>
+                        {% for v in range(0,5) %}
+                        <td class="text-center">
+                            <input type="radio" name="r{{i}}_resp" value="{{v}}" {% if rb and getattr(rb, 'r'
+                                +i|string+'_resp')==v %}checked{% endif %}>
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    <tr>
+                        <td>Estudiante</td>
+                        {% for v in range(0,5) %}
+                        <td class="text-center">
+                            <input type="radio" name="r{{i}}_est" value="{{v}}" {% if rb and getattr(rb, 'r'
+                                +i|string+'_est')==v %}checked{% endif %}>
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <label class="form-label">Observaciones del responsable</label>
+        <textarea name="observ_resp" class="form-control" rows="3">{{ rb.observ_resp if rb else '' }}</textarea>
+    </div>
+    <div class="col-md-6">
+        <label class="form-label">Observaciones del estudiante</label>
+        <textarea name="observ_est" class="form-control" rows="3">{{ rb.observ_est if rb else '' }}</textarea>
+    </div>
+
+    <div class="col-12">
+        <button class="btn btn-primary">Guardar</button>
+        <a href="{{ url_for('alumnos.mis_documentos') }}" class="btn btn-secondary ms-2">Volver</a>
+    </div>
+</form>
+{% endblock %}

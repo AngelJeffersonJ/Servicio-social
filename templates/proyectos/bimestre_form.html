@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% block title %}Reporte bimestral {{ numero }}{% endblock %}
+{% block content %}
+
+<h4 class="mb-3">Reporte bimestral {{ numero }}</h4>
+
+{# ------- Encabezado de contexto ------- #}
+<div class="card bg-dark border-secondary mb-3">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div><small class="text-secondary">Alumno</small>
+                    <div>{{ alumno.nombre }}</div>
+                </div>
+                <div class="mt-2"><small class="text-secondary">Proyecto</small>
+                    <div>{{ proyecto.nombre }}</div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div><small class="text-secondary">Dependencia</small>
+                    <div>{{ proyecto.nombre_dependencia or (proyecto.departamento.nombre if proyecto.departamento else
+                        '-') }}</div>
+                </div>
+                <div class="mt-2"><small class="text-secondary">Responsable</small>
+                    <div>{{ proyecto.nombre_responsable or (proyecto.responsable_user.nombre if
+                        proyecto.responsable_user else '-') }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# ------- Utilidades locales ------- #}
+{% macro int_or_none(x) -%}
+{%- if x is not none and (x|string) != '' -%}{{ (x|string)|int }}{%- else -%}{% endif -%}
+{%- endmacro %}
+
+{% set _fd = form_data if form_data is defined else {} %}
+{# Si no hay form_data, lo armamos desde rb para la vista de edición #}
+{% if rb and (_fd is not mapping or _fd|length == 0) %}
+{% set _fd = {
+'dia1': rb.dia1 or '',
+'mes1': rb.mes1 or '',
+'ano1': rb.ano1 or '',
+'dia2': rb.dia2 or '',
+'mes2': rb.mes2 or '',
+'ano2': rb.ano2 or '',
+'nombre_supervisor': rb.nombre_supervisor or '',
+'puesto_supervisor': rb.puesto_supervisor or '',
+'observaciones_responsable': rb.observaciones_responsable or ''
+} %}
+{% endif %}
+
+{# Selecciones actuales de radios; soporta 0 y strings #}
+{% set _rbvals = rb_vals if rb_vals is defined else {} %}
+{% if not _rbvals and rb %}
+{% set _rbvals = {
+'resp_1': rb.resp_1, 'resp_2': rb.resp_2, 'resp_3': rb.resp_3,
+'resp_4': rb.resp_4, 'resp_5': rb.resp_5, 'resp_6': rb.resp_6, 'resp_7': rb.resp_7
+} %}
+{% endif %}
+
+{% macro radios(name, label) -%}
+{% set sel = int_or_none(_rbvals.get(name))|trim %}
+<div class="mb-3">
+    <label class="form-label">{{ label }}</label>
+    <div class="d-flex gap-3 flex-wrap">
+        {% for v in [0,1,2,3,4] %}
+        {% set vid = name ~ '_' ~ v %}
+        <div class="form-check">
+            <input class="form-check-input" type="radio" name="{{ name }}" id="{{ vid }}" value="{{ v }}" {% if sel !=''
+                and (sel|string)==(v|string) %}checked{% endif %}>
+            <label class="form-check-label" for="{{ vid }}">{{ v }}</label>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{%- endmacro %}
+
+<form method="post">
+    {{ csrf_token() }}
+
+    <div class="row g-3">
+        <div class="col-md-2">
+            <label class="form-label">Día inicio</label>
+            <input name="dia1" class="form-control" value="{{ _fd.get('dia1','') }}">
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Mes inicio</label>
+            <input name="mes1" class="form-control" value="{{ _fd.get('mes1','') }}">
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Año inicio</label>
+            <input name="ano1" class="form-control" value="{{ _fd.get('ano1','') }}">
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label">Día fin</label>
+            <input name="dia2" class="form-control" value="{{ _fd.get('dia2','') }}">
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Mes fin</label>
+            <input name="mes2" class="form-control" value="{{ _fd.get('mes2','') }}">
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Año fin</label>
+            <input name="ano2" class="form-control" value="{{ _fd.get('ano2','') }}">
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label">Nombre del supervisor</label>
+            <input name="nombre_supervisor" class="form-control" value="{{ _fd.get('nombre_supervisor','') }}">
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Puesto del supervisor</label>
+            <input name="puesto_supervisor" class="form-control" value="{{ _fd.get('puesto_supervisor','') }}">
+        </div>
+    </div>
+
+    <hr class="my-4">
+
+    {{ radios("resp_1", "1. Cumple en tiempo y forma con las actividades encomendadas alcanzando los objetivos") }}
+    {{ radios("resp_2", "2. Trabaja en equipo y se adapta a nuevas situaciones") }}
+    {{ radios("resp_3", "3. Muestra liderazgo en las actividades encomendadas") }}
+    {{ radios("resp_4", "4. Organiza su tiempo y trabaja de manera proactiva") }}
+    {{ radios("resp_5", "5. Interpreta la realidad y aporta soluciones a la problemática") }}
+    {{ radios("resp_6", "6. Realiza sugerencias innovadoras para beneficio/mejora del programa") }}
+    {{ radios("resp_7", "7. Tiene iniciativa para ayudar y muestra espíritu de servicio") }}
+
+    <div class="mb-3">
+        <label class="form-label">Observaciones del responsable</label>
+        <textarea name="observaciones_responsable" class="form-control"
+            rows="4">{{ _fd.get('observaciones_responsable','') }}</textarea>
+    </div>
+
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('proyectos.bimestres_list', alumno_id=alumno.id, proyecto_id=proyecto.id) }}"
+            class="btn btn-outline-light">Volver</a>
+        <button class="btn btn-primary">{{ 'Guardar cambios' if rb else 'Crear reporte' }}</button>
+    </div>
+</form>
+
+{% endblock %}
