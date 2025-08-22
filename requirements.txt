@@ -5,3 +5,4 @@ docxtpl==0.16.7
 python-docx==1.1.2
 psycopg2-binary==2.9.9   # bórralo si no usas Postgres
 gunicorn==22.0.0
+Flask-Migrate==4.0.7
