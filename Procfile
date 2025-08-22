@@ -1,1 +1,1 @@
-web: gunicorn "wsgi:app" --bind 0.0.0.0:$PORT --workers 3 --timeout 120 --log-file -
+web: gunicorn -w 3 -b 0.0.0.0:${PORT} wsgi:app
