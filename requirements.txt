@@ -3,4 +3,5 @@ Flask-Login==0.6.3
 Flask-SQLAlchemy==3.1.1
 docxtpl==0.16.7
 python-docx==1.1.2
-psycopg2-binary
+psycopg2-binary==2.9.9   # bórralo si no usas Postgres
+gunicorn==22.0.0
