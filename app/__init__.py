@@ -16,6 +16,7 @@ migrate = Migrate()
 def _normalize_database_url(raw: str) -> str:
     """
     Normaliza DSN para SQLAlchemy:
+    - Para SQLite, devuelve el valor tal cual (evita colapsar 'sqlite:///').
     - Reescribe 'postgres://' -> 'postgresql+psycopg2://'
     - Añade sslmode=require cuando se usa el host público de Railway (proxy.rlwy.net)
       o cuando se define FORCE_DB_SSL=true.
@@ -23,13 +24,17 @@ def _normalize_database_url(raw: str) -> str:
     if not raw:
         return raw
 
-    # 1) postgres -> postgresql+psycopg2
+    # --- Caso SQLite: NO tocar, para no romper 'sqlite:///' ---
+    if raw.startswith("sqlite:"):
+        return raw
+
+    # --- Postgres: normaliza driver ---
     if raw.startswith("postgres://"):
         raw = "postgresql+psycopg2://" + raw[len("postgres://"):]
     elif raw.startswith("postgresql://"):
         raw = "postgresql+psycopg2://" + raw[len("postgresql://"):]
 
-    # 2) sslmode=require si corresponde
+    # --- SSL si aplica (Railway/Gateway) ---
     u = urlparse(raw)
     q = dict(parse_qsl(u.query, keep_blank_values=True))
     need_ssl = (
@@ -40,8 +45,9 @@ def _normalize_database_url(raw: str) -> str:
     if need_ssl and "sslmode" not in q:
         q["sslmode"] = "require"
 
-    raw = urlunparse((u.scheme, u.netloc, u.path, u.params, urlencode(q), u.fragment))
-    return raw
+    # OJO: aquí sí podemos usar urlunparse porque no es sqlite
+    return urlunparse((u.scheme, u.netloc, u.path, u.params, urlencode(q), u.fragment))
+
 
 
 def create_app() -> Flask:
@@ -58,7 +64,8 @@ def create_app() -> Flask:
 
     # Base de datos: por defecto SQLite en instance/, o bien DATABASE_URL (Railway)
     os.makedirs(app.instance_path, exist_ok=True)
-    default_db = "sqlite:///" + os.path.join(app.instance_path, "servicio.db")
+    sqlite_path = os.path.join(app.instance_path, "servicio.db").replace(os.sep, "/")
+    default_db = f"sqlite:///{sqlite_path}"
     raw_dsn = os.environ.get("DATABASE_URL", default_db)
     app.config["SQLALCHEMY_DATABASE_URI"] = _normalize_database_url(raw_dsn)
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False

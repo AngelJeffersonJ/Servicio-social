@@ -269,3 +269,24 @@ class EvaluacionFinal(db.Model):
 
     def __repr__(self) -> str:
         return f"<EvaluacionFinal proyecto={self.proyecto_id} alumno={self.alumno_id}>"
+
+class AlumnoInfo(db.Model):
+    __tablename__ = "alumno_info"
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, unique=True)
+    nombre = db.Column(db.String(120))
+    apellido_paterno = db.Column(db.String(120))
+    apellido_materno = db.Column(db.String(120))
+    no_control = db.Column(db.String(50))
+    carrera = db.Column(db.String(120))
+    user = db.relationship("User", backref=db.backref("alumno_info", uselist=False))
+
+class StaffInfo(db.Model):
+    __tablename__ = "staff_info"
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, unique=True)
+    nombre = db.Column(db.String(120))
+    apellido_paterno = db.Column(db.String(120))
+    apellido_materno = db.Column(db.String(120))
+    cargo = db.Column(db.String(120))
+    user = db.relationship("User", backref=db.backref("staff_info", uselist=False))
